@@ -1,0 +1,38 @@
+audit:  # Configurations for auditing
+  random_seed: 1234  # Integer specifying the random seed
+  report_log: none # Folder to save the auditing report 
+  config_log: none  # Folder to save the configuration files
+  attack_list:
+    lira:
+      training_data_fraction: 0.5 # Fraction of the auxilary dataset to use for this attack (in each shadow model training)
+      num_shadow_models: 10 # Number of shadow models to train
+      online: True # perform online or offline attack
+      fixed_variance: True
+      train_data_path: none
+      representation: none
+      report_log: none
+    rmia:
+      training_data_fraction: 0.5  # Fraction of the auxilary dataset to use for this attack (in each shadow model training)
+      attack_data_fraction: 0.2 # Fraction of auxiliary dataset to sample from during attack
+      num_shadow_models: 10 # Number of shadow models to train
+      online: True
+      train_data_path: none
+      representation: none
+      report_log: none
+
+  attack_type: "mia"
+
+shadow_model:
+  storage_path: none
+
+distillation_model: 
+  storage_path: none
+
+moreno:
+  representation: none
+  hyperparameters_path: none
+  model_path: none
+
+data:
+  train_data_path: none
+  test_data_path: none
