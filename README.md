@@ -1,10 +1,10 @@
-# Project Title
+# Training data privacy assessment for molecular property prediction
 
-Training data privacy assessment for molecular property prediction
+Python package to assess how much information somebody can deduct from a neural network trained on some (confidential) training data for molecular property prediction.
 
 ## Getting Started
 
-These instructions will help you install the python package to conduct privacy assessments on data for molecular property prediction.
+These instructions will help you install the python package and conduct a privacy assessments on data for molecular property prediction.
 
 ### Prerequisites
 
@@ -47,7 +47,7 @@ $ privacytest --representation REPRESENTATION --result_folder RESULT_FOLDER [opt
 `--result_folder`: Path to the folder where the results will be stored.
 
 #### Optional Arguments
---`dataset`: Specifies the dataset to use. Choices are:
+`--dataset`: Specifies the dataset to use. Choices are:
 - `ames` (default)
 - `herg`
 - `del`
@@ -68,11 +68,11 @@ Default: `1.0`
 #### Examples
 Run with default dataset and parameters:
 ```
-$ privacytest --representation ECFP4 --result_folder ./results
+$ privacytest --representation ECFP4 --result_folder "home/results"
 ```
 Use a custom dataset:
 ```
-$ privacytest --representation MACCS --result_folder ./results --dataset file --dataset_path ./data/my_dataset.csv
+$ privacytest --representation MACCS --result_folder "home/results" --dataset file --dataset_path "home/data/my_dataset.csv"
 ```
 
 #### Help
@@ -96,7 +96,7 @@ from mycode import my_custom_representation_function
 
 # Define privacy test parameters
 representation = 'custom'
-result_folder = './results'
+result_folder = 'home/results'
 dataset = 'ames'
 split = [0.45, 0.1, 0.45]
 hyperparameter_optimization_time = 600
@@ -148,14 +148,14 @@ When you run the privacy test, the results are saved in the `result_folder` you 
 #### `model_config.yaml`
 - A configuration file that summarizes all model related configurations.
 
-#### 7. `privacy_config.yaml`
+#### `privacy_config.yaml`
 - A configuration file that summarizes all membership inference attack related configurations.
 
 
 ## Citation
 
-This repository is part of the paper "Publishing neural networks in drug discovery compromises training data privacy".
-Pre-print: TODO
+This repository is part of the paper "Publishing neural networks in drug discovery compromises training data privacy". \\
+Pre-print: TODO \\
 Bibtex: TODO
 
 
