@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 from moreno.config import Config
 import torch
 from moreno.utils.plot_roc import plot_roc
+import pandas as pd
 
 T = TypeVar("T", bound=L.LightningModule)
 
@@ -112,4 +113,6 @@ class Optimizer(Generic[T], ABC):
                 for pred, label in zip(predictions, y):
                     y_pred.extend(pred.detach().flatten().tolist())
                     y_true.extend(label.detach().flatten().tolist())
-        plot_roc(y_pred=y_pred, y_true=y_true, save_location=self.subfolder_path)  
+        plot_roc(y_pred=y_pred, y_true=y_true, save_location=self.subfolder_path)
+        roc = pd.DataFrame({"y_true": y_true, "y_pred": y_pred})
+        roc.to_csv(self.subfolder_path / "roc.csv", index=False)
