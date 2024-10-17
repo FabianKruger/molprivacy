@@ -17,7 +17,7 @@ class AttackFactoryMIA:
         "population": AttackP,
         "rmia": AttackRMIA,
         "qmia": AttackQMIA,
-        "lira": AttackLiRA
+        "lira": AttackLiRA,
     }
 
     # Shared variables for all attacks
@@ -25,7 +25,9 @@ class AttackFactoryMIA:
     distillation_model_handler = None
 
     @classmethod
-    def create_attack(cls, name: str, handler: AbstractInputHandler) -> AbstractMIA:  # noqa: ANN102
+    def create_attack(
+        cls, name: str, handler: AbstractInputHandler
+    ) -> AbstractMIA:  # noqa: ANN102
         """Create the attack object.
 
         Args:
@@ -49,8 +51,12 @@ class AttackFactoryMIA:
 
         if AttackFactoryMIA.distillation_model_handler is None:
             handler.logger.info("Creating distillation model handler singleton")
-            AttackFactoryMIA.distillation_model_handler = DistillationModelHandler(handler)
+            AttackFactoryMIA.distillation_model_handler = DistillationModelHandler(
+                handler
+            )
 
         if name in cls.attack_classes:
-            return cls.attack_classes[name](handler, handler.configs["audit"]["attack_list"][name])
+            return cls.attack_classes[name](
+                handler, handler.configs["audit"]["attack_list"][name]
+            )
         raise ValueError(f"Unknown attack type: {name}")

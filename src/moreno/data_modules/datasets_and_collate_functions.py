@@ -20,7 +20,9 @@ class GraphDataset(Dataset):
         return self.molecules[idx], self.labels[idx]
 
 
-def mol_collate_fn(batch: List[Tuple[List[Mol], ndarray]]) -> Tuple[List[List[Mol]], torch.Tensor]:
+def mol_collate_fn(
+    batch: List[Tuple[List[Mol], ndarray]]
+) -> Tuple[List[List[Mol]], torch.Tensor]:
 
     mols_batch = []
     labels_batch = []
@@ -32,6 +34,7 @@ def mol_collate_fn(batch: List[Tuple[List[Mol], ndarray]]) -> Tuple[List[List[Mo
     labels_tensor = torch.tensor(labels_batch, dtype=torch.float32)
 
     return mols_batch, labels_tensor
+
 
 class CNNDataset(Dataset):
     def __init__(self, encodings: List[torch.Tensor], labels: np.ndarray):
@@ -48,10 +51,13 @@ class CNNDataset(Dataset):
         label = self.labels[idx]
         return encoding, label
 
-def CNN_collate_fn(batch: List[Tuple[torch.Tensor, int]]) -> Tuple[torch.Tensor, torch.Tensor]:
-    data = [item[0] for item in batch] # List[(S,E)]
-    targets = torch.tensor([item[1] for item in batch]) # (B)
-    data = pad_sequence(data, batch_first=True, padding_value=0) # (B, S, E)
+
+def CNN_collate_fn(
+    batch: List[Tuple[torch.Tensor, int]]
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    data = [item[0] for item in batch]  # List[(S,E)]
+    targets = torch.tensor([item[1] for item in batch])  # (B)
+    data = pad_sequence(data, batch_first=True, padding_value=0)  # (B, S, E)
     # If necessary, pad the sequences to have a sequence length of at least 20 to make sure all the filters will work
     if data.size(1) < 20:
         padding = torch.zeros((data.size(0), 20 - data.size(1), data.size(2)))

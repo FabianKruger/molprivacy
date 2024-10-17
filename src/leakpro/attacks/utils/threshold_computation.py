@@ -12,6 +12,7 @@ from typing import Any, Dict, List
 # HYPOTHESIS TEST: LINEAR INTERPOLATION THRESHOLDING
 ########################################################################################################################
 
+
 def linear_itp_threshold_func(
     distribution: List[float],
     alpha: List[float],
@@ -57,9 +58,7 @@ def linear_itp_threshold_func(
         )
 
     else:
-        threshold = np.quantile(
-            distribution, q=alpha[1:-1], method="linear", **kwargs
-        )
+        threshold = np.quantile(distribution, q=alpha[1:-1], method="linear", **kwargs)
         threshold = np.concatenate(
             [
                 np.array(distribution.min() - 1e-4).reshape(-1),
@@ -71,12 +70,12 @@ def linear_itp_threshold_func(
 
     return threshold
 
+
 ########################################################################################################################
 # HYPOTHESIS TEST: LOGIT RESCALE THRESHOLDING
 ########################################################################################################################
 def logit_rescale_threshold_func(
-    distribution: List[float],
-    alpha: List[float]
+    distribution: List[float], alpha: List[float]
 ) -> float:
     """Return the threshold as the alpha quantile of a Gaussian fit over logit rescaling transform.
 
@@ -93,10 +92,7 @@ def logit_rescale_threshold_func(
 
     """
     distribution = distribution + 0.000001  # avoid nan
-    distribution = np.log(
-        np.divide(np.exp(-distribution), (1 - np.exp(-distribution)))
-    )
-
+    distribution = np.log(np.divide(np.exp(-distribution), (1 - np.exp(-distribution))))
 
     if len(distribution.shape) > 1:
         parameters = np.array(
@@ -114,13 +110,11 @@ def logit_rescale_threshold_func(
 
     return np.log(np.exp(threshold) + 1) - threshold
 
+
 ########################################################################################################################
 # HYPOTHESIS TEST: GAUSSIAN THRESHOLDING
 ########################################################################################################################
-def gaussian_threshold_func(
-    distribution: List[float],
-    alpha: List[float]
-) -> float:
+def gaussian_threshold_func(distribution: List[float], alpha: List[float]) -> float:
     """Return the threshold as the alpha quantile of a Gaussian curve fit over the provided distribution.
 
     Args:
@@ -149,4 +143,3 @@ def gaussian_threshold_func(
         loc, scale = norm.fit(distribution)
         threshold = norm.ppf(alpha, loc=loc, scale=scale)
     return threshold
-

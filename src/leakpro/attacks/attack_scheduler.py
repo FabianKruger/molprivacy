@@ -6,6 +6,7 @@ from leakpro.user_inputs.abstract_input_handler import AbstractInputHandler
 
 from typing import Any, Dict
 
+
 class AttackScheduler:
     """Class responsible for creating and executing attacks."""
 
@@ -23,7 +24,9 @@ class AttackScheduler:
 
         """
         configs = handler.configs
-        if configs["audit"]["attack_type"] not in list(self.attack_type_to_factory.keys()):
+        if configs["audit"]["attack_type"] not in list(
+            self.attack_type_to_factory.keys()
+        ):
             raise ValueError(
                 f"Unknown attack type: {configs['audit']['attack_type']}. "
                 f"Supported attack types: {self.attack_type_to_factory.keys()}"
@@ -44,7 +47,9 @@ class AttackScheduler:
                 self.logger.info(f"Added attack: {attack_name}")
             except ValueError as e:
                 self.logger.info(e)
-                self.logger.info(f"Failed to create attack: {attack_name}, supported attacks: {factory.attack_classes.keys()}")
+                self.logger.info(
+                    f"Failed to create attack: {attack_name}, supported attacks: {factory.attack_classes.keys()}"
+                )
 
     def add_attack(self, attack: AbstractMIA) -> None:
         """Add an attack to the list of attacks."""

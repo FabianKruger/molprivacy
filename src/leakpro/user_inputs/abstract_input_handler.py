@@ -16,7 +16,7 @@ from leakpro.utils.input_handler import get_class_from_module, import_module_fro
 class AbstractInputHandler(ABC):
     """Parent class for user inputs."""
 
-    def __init__(self, configs: dict, logger:logging.Logger) -> None:
+    def __init__(self, configs: dict, logger: logging.Logger) -> None:
         self.configs = configs
         self.logger = logger
 
@@ -44,27 +44,39 @@ class AbstractInputHandler(ABC):
         try:
             with open(self.configs["target"]["data_path"], "rb") as file:
                 self.population = joblib.load(file)
-                self.logger.info(f"Loaded population dataset from {self.configs['target']['data_path']}")
-            self.logger.info(f"Loaded population dataset from {self.configs['target']['data_path']}")
+                self.logger.info(
+                    f"Loaded population dataset from {self.configs['target']['data_path']}"
+                )
+            self.logger.info(
+                f"Loaded population dataset from {self.configs['target']['data_path']}"
+            )
         except FileNotFoundError as e:
-            raise FileNotFoundError(f"Could not find the population dataset at {self.configs['target']['data_path']}") from e
+            raise FileNotFoundError(
+                f"Could not find the population dataset at {self.configs['target']['data_path']}"
+            ) from e
 
     def _load_model_class(self) -> None:
         """Get the model class blueprint from the target module."""
-        model_class=self.configs["target"].get("model_class", None)
+        model_class = self.configs["target"].get("model_class", None)
         if model_class is None:
             raise ValueError("model_class not found in configs.")
 
-        module_path=self.configs["target"].get("module_path", None)
+        module_path = self.configs["target"].get("module_path", None)
         if module_path is None:
             raise ValueError("module_path not found in configs.")
 
         try:
             target_module = import_module_from_file(module_path)
-            self._target_model_blueprint = get_class_from_module(target_module, model_class)
-            self.logger.info(f"Target model blueprint created from {model_class} in {module_path}.")
+            self._target_model_blueprint = get_class_from_module(
+                target_module, model_class
+            )
+            self.logger.info(
+                f"Target model blueprint created from {model_class} in {module_path}."
+            )
         except Exception as e:
-            raise ValueError(f"Failed to create the target model blueprint from {model_class} in {module_path}") from e
+            raise ValueError(
+                f"Failed to create the target model blueprint from {model_class} in {module_path}"
+            ) from e
 
     def _validate_target_metadata(self) -> None:
         """Validate the target model metadata."""
@@ -76,16 +88,22 @@ class AbstractInputHandler(ABC):
 
     def _load_target_metadata(self) -> None:
         """Get the target model metadata from the trained model metadata file."""
-        target_model_metadata_path = self.configs["target"].get("trained_model_metadata_path", None)
+        target_model_metadata_path = self.configs["target"].get(
+            "trained_model_metadata_path", None
+        )
         if target_model_metadata_path is None:
             raise ValueError("Trained model metadata path not found in configs.")
         try:
             with open(target_model_metadata_path, "rb") as f:
                 self.target_model_metadata = joblib.load(f)
                 self._validate_target_metadata()
-            self.logger.info(f"Loaded target model metadata from {target_model_metadata_path}")
+            self.logger.info(
+                f"Loaded target model metadata from {target_model_metadata_path}"
+            )
         except FileNotFoundError as e:
-            raise FileNotFoundError(f"Could not find the target model metadata at {target_model_metadata_path}") from e
+            raise FileNotFoundError(
+                f"Could not find the target model metadata at {target_model_metadata_path}"
+            ) from e
 
     def _load_trained_target_model(self) -> None:
         """Get the trained target model."""
@@ -99,11 +117,13 @@ class AbstractInputHandler(ABC):
                 self.target_model.load_state_dict(torch.load(f))
             self.logger.info(f"Loaded target model from {model_path}")
         except FileNotFoundError as e:
-            raise FileNotFoundError(f"Could not find the trained target model at {model_path}") from e
+            raise FileNotFoundError(
+                f"Could not find the trained target model at {model_path}"
+            ) from e
 
-    #------------------------------------------------
+    # ------------------------------------------------
     # Methods related to population dataset
-    #------------------------------------------------
+    # ------------------------------------------------
     def _validate_indices(self, dataset_indices: np.ndarray) -> None:
         if self.population is None:
             raise ValueError("Population dataset is not loaded.")
@@ -118,7 +138,9 @@ class AbstractInputHandler(ABC):
             raise ValueError("Dataset indices contain duplicates.")
 
         if not np.all(dataset_indices < len(self.population)):
-            raise ValueError("Dataset indices contain values greater than the population size.")
+            raise ValueError(
+                "Dataset indices contain values greater than the population size."
+            )
 
         if not np.all(dataset_indices >= 0):
             raise ValueError("Dataset indices contain negative values.")
@@ -134,33 +156,45 @@ class AbstractInputHandler(ABC):
         self._validate_indices(dataset_indices)
         return self.population.subset(dataset_indices)
 
-    def get_dataloader(self, dataset_indices: np.ndarray, batch_size: int = 32) -> DataLoader:
+    def get_dataloader(
+        self, dataset_indices: np.ndarray, batch_size: int = 32
+    ) -> DataLoader:
         """Default implementation of the dataloader."""
         dataset = self.get_dataset(dataset_indices)
-        return DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True) # TODO: ask Johan if shuffle makes sense here
-    
+        return DataLoader(
+            dataset=dataset, batch_size=batch_size, shuffle=True
+        )  # TODO: ask Johan if shuffle makes sense here
+
     def get_dataloader_from_dataset(self, dataset: Dataset):
         return DataLoader(dataset=dataset, batch_size=32, shuffle=False)
 
-    #------------------------------------------------
+    # ------------------------------------------------
     # Methods related to target model
-    #------------------------------------------------
-    def get_target_replica(self) -> Tuple[torch.nn.Module, nn.modules.loss._Loss, torch.optim.Optimizer]:
+    # ------------------------------------------------
+    def get_target_replica(
+        self,
+    ) -> Tuple[torch.nn.Module, nn.modules.loss._Loss, torch.optim.Optimizer]:
         """Get an instance of a model created from the target model."""
         init_params = self.target_model_metadata.get("init_params", {})
         try:
             model_replica = self.target_model_blueprint(**init_params)
-            return model_replica, self.get_criterion(), self.get_optimizer(model_replica)
+            return (
+                model_replica,
+                self.get_criterion(),
+                self.get_optimizer(model_replica),
+            )
         except Exception as e:
             raise ValueError("Failed to create an instance of the shadow model.") from e
 
     @abstractmethod
-    def get_criterion(self, criterion: torch.nn.modules.loss._Loss) -> None: # TODO: wrong?
+    def get_criterion(
+        self, criterion: torch.nn.modules.loss._Loss
+    ) -> None:  # TODO: wrong?
         """Get the loss function for the target model to be used in shadow model training."""
         pass
 
     @abstractmethod
-    def get_optimizer(self, model:torch.nn.Module) -> torch.optim.Optimizer:
+    def get_optimizer(self, model: torch.nn.Module) -> torch.optim.Optimizer:
         """Get the optimizer used for the target model to be used in shadow model training."""
         pass
 
@@ -176,16 +210,16 @@ class AbstractInputHandler(ABC):
         """Procedure to train the shadow models on data from the population."""
         pass
 
-    #------------------------------------------------
+    # ------------------------------------------------
     # get-set methods
-    #------------------------------------------------
+    # ------------------------------------------------
     @property
     def target_model_blueprint(self) -> torch.nn.Module:
         """Get the target model blueprint."""
         return self._target_model_blueprint
 
     @target_model_blueprint.setter
-    def target_model_blueprint(self, value:torch.nn.Module) -> None:
+    def target_model_blueprint(self, value: torch.nn.Module) -> None:
         """Set the target model blueprint."""
         self._target_model_blueprint = value
 
@@ -195,7 +229,7 @@ class AbstractInputHandler(ABC):
         return self._target_model
 
     @target_model.setter
-    def target_model(self, model:torch.nn.Module) -> None:
+    def target_model(self, model: torch.nn.Module) -> None:
         """Set the trained target model."""
         self._target_model = model
 
@@ -205,7 +239,7 @@ class AbstractInputHandler(ABC):
         return self._target_model_metadata
 
     @target_model_metadata.setter
-    def target_model_metadata(self, metadata:dict) -> None:
+    def target_model_metadata(self, metadata: dict) -> None:
         """Set the metadata of the target model."""
         self._target_model_metadata = metadata
 

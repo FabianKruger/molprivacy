@@ -15,19 +15,19 @@ from leakpro.utils.input_handler import (
 )
 
 
-class ModelHandler():
+class ModelHandler:
     """Class to handle models used in attacks."""
 
     def __init__(
         self,
         handler: AbstractInputHandler,
-    )->None:
+    ) -> None:
         """Initialize the ModelHandler class."""
         self.logger = handler.logger
         self.handler = handler
         self.init_params = {}
 
-    def _import_model_from_path(self, module_path:str, model_class:str)->Module:
+    def _import_model_from_path(self, module_path: str, model_class: str) -> Module:
         """Import the model from the given path.
 
         Args:
@@ -44,9 +44,11 @@ class ModelHandler():
             module = import_module_from_file(module_path)
             self.model_blueprint = get_class_from_module(module, model_class)
         except Exception as e:
-            raise ValueError(f"Failed to create model blueprint from {model_class} in {module_path}") from e
+            raise ValueError(
+                f"Failed to create model blueprint from {model_class} in {module_path}"
+            ) from e
 
-    def _get_optimizer_class(self, optimizer_name:str)->torch.optim.Optimizer:
+    def _get_optimizer_class(self, optimizer_name: str) -> torch.optim.Optimizer:
         """Get the optimizer class based on the optimizer name.
 
         Args:
@@ -61,9 +63,11 @@ class ModelHandler():
         try:
             self.optimizer_class = get_optimizer_mapping()[optimizer_name]
         except Exception as e:
-            raise ValueError(f"Failed to create optimizer from {self.optimizer_config['name']}") from e
+            raise ValueError(
+                f"Failed to create optimizer from {self.optimizer_config['name']}"
+            ) from e
 
-    def _get_criterion_class(self, criterion_name:str)->torch.nn.Module:
+    def _get_criterion_class(self, criterion_name: str) -> torch.nn.Module:
         """Get the criterion class based on the criterion name.
 
         Args:
@@ -78,7 +82,9 @@ class ModelHandler():
         try:
             self.criterion_class = get_criterion_mapping()[criterion_name]
         except Exception as e:
-            raise ValueError(f"Failed to create criterion from {self.criterion_config['name']}") from e
+            raise ValueError(
+                f"Failed to create criterion from {self.criterion_config['name']}"
+            ) from e
 
     def _get_model_criterion_optimizer(self) -> Tuple[Module, Module, Module]:
         """Get the model, criterion, and optimizer from the handler or config."""
@@ -86,7 +92,9 @@ class ModelHandler():
         # Set up shadow model from config file
         if self.model_blueprint is not None:
             model = self.model_blueprint(**self.init_params)
-            optimizer = self.optimizer_class(model.parameters(), **self.optimizer_config)
+            optimizer = self.optimizer_class(
+                model.parameters(), **self.optimizer_config
+            )
             criterion = self.criterion_class(**self.loss_config)
         else:
             # Set up shadow model from handler
@@ -94,7 +102,7 @@ class ModelHandler():
 
         return model, criterion, optimizer
 
-    def _load_model(self, model_path:str) -> Module:
+    def _load_model(self, model_path: str) -> Module:
         """Load a shadow model from a saved state.
 
         Args:
@@ -107,9 +115,17 @@ class ModelHandler():
 
         """
         try:
-            blueprint = self.handler.target_model_blueprint if self.model_blueprint is None else self.model_blueprint
+            blueprint = (
+                self.handler.target_model_blueprint
+                if self.model_blueprint is None
+                else self.model_blueprint
+            )
             model = blueprint(**self.init_params)  # noqa: E501
-            criterion = self.handler.get_criterion() if self.criterion_class is None else self.criterion_class(**self.loss_config)
+            criterion = (
+                self.handler.get_criterion()
+                if self.criterion_class is None
+                else self.criterion_class(**self.loss_config)
+            )
         except Exception as e:
             raise ValueError("Failed to create model from blueprint") from e
 
@@ -121,7 +137,7 @@ class ModelHandler():
         except FileNotFoundError as e:
             raise ValueError(f"Model file not found at {model_path}") from e
 
-    def _load_metadata(self, metadata_path:str) -> dict:
+    def _load_metadata(self, metadata_path: str) -> dict:
         """Load metadata from a saved state.
 
         Args:

@@ -44,9 +44,9 @@ class CNNOptimizer(Optimizer[CNNLightning]):
 
         # creates dataloaders here, so they don't need to be created everytime in the objective function.
         self.datamodule.prepare_data()
-        self.datamodule.setup(stage="fit")  
+        self.datamodule.setup(stage="fit")
         self.train_loader = self.datamodule.train_dataloader()
-        self.val_loader = self.datamodule.val_dataloader()      
+        self.val_loader = self.datamodule.val_dataloader()
 
     def objective(self, trial: optuna.trial.Trial) -> float:
         """Optunas objective function for hyperparameter evaluation.
@@ -73,7 +73,6 @@ class CNNOptimizer(Optimizer[CNNLightning]):
         # make pruning callback
         callback = PyTorchLightningPruningCallback(trial, monitor="val_loss")
         early_stopping_callback = EarlyStopping(monitor="val_loss", patience=2)
-
 
         # instantiate trainer
         trainer = L.Trainer(

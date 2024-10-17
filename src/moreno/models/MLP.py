@@ -113,8 +113,6 @@ class MLPLightning(L.LightningModule):
         accuracy = predictions.round().eq(y.round()).float().mean()
         self.log("test_accuracy", accuracy)
 
-
-    
     def configure_optimizers(self) -> torch.optim.Optimizer:
         optimizer = torch.optim.AdamW(
             self.parameters(), lr=self.lr, weight_decay=self.weight_decay

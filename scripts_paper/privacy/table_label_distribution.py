@@ -3,18 +3,28 @@ from pathlib import Path
 from typing import List, Tuple
 from scipy.stats import mannwhitneyu
 from itertools import product
-import numpy as np 
+import numpy as np
+
 
 def load_data(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path)
     return df
 
-def calculate_label_distribution(population: pd.DataFrame, subset: pd.DataFrame, label_col: str, subset_label_col: str) -> Tuple[float, float]:
+
+def calculate_label_distribution(
+    population: pd.DataFrame,
+    subset: pd.DataFrame,
+    label_col: str,
+    subset_label_col: str,
+) -> Tuple[float, float]:
     subset_label_ratio = subset[subset_label_col].mean()
     population_label_ratio = population[label_col].mean()
     return subset_label_ratio, population_label_ratio
 
-def create_dataframe(representations: List[str], dataset: str, base_path: Path) -> pd.DataFrame:
+
+def create_dataframe(
+    representations: List[str], dataset: str, base_path: Path
+) -> pd.DataFrame:
     data = {
         "Dataset": [],
         "Representation": [],
@@ -27,7 +37,7 @@ def create_dataframe(representations: List[str], dataset: str, base_path: Path) 
         "RMIA_Label_Mean": [],
         "RMIA_Label_Std": [],
         "RMIA_P_Value": [],
-        "RMIA_Sample_Size": []
+        "RMIA_Sample_Size": [],
     }
 
     for rep in representations:
@@ -36,23 +46,53 @@ def create_dataframe(representations: List[str], dataset: str, base_path: Path) 
         rmia_data = []
         for job in range(1, 21):
             try:
-                pop_df = load_data(base_path / dataset / f"job_{job}" / "data_dir" / "train.csv")
-                lira_df = load_data(base_path / dataset / f"job_{job}" / "..." / "privacy" / "results" / "true_positives_at_FPR0" / "lira.csv")
-                rmia_df = load_data(base_path / dataset / f"job_{job}" / "..." / "privacy" / "results" / "true_positives_at_FPR0" / "rmia.csv")
+                pop_df = load_data(
+                    base_path / dataset / f"job_{job}" / "data_dir" / "train.csv"
+                )
+                lira_df = load_data(
+                    base_path
+                    / dataset
+                    / f"job_{job}"
+                    / "..."
+                    / "privacy"
+                    / "results"
+                    / "true_positives_at_FPR0"
+                    / "lira.csv"
+                )
+                rmia_df = load_data(
+                    base_path
+                    / dataset
+                    / f"job_{job}"
+                    / "..."
+                    / "privacy"
+                    / "results"
+                    / "true_positives_at_FPR0"
+                    / "rmia.csv"
+                )
                 population_data.append(pop_df)
                 lira_data.append(lira_df)
                 rmia_data.append(rmia_df)
             except Exception as e:
                 print(f"Exception for {dataset} {job} {rep}: {e}")
-        
-        population_labels = [df['label'].mean() for df in population_data]
-        lira_labels = [calculate_label_distribution(pop_df, leak_df, 'label', 'property_label')[0] for pop_df, leak_df in zip(population_data, lira_data)]
-        rmia_labels = [calculate_label_distribution(pop_df, leak_df, 'label', 'property_label')[0] for pop_df, leak_df in zip(population_data, rmia_data)]
+
+        population_labels = [df["label"].mean() for df in population_data]
+        lira_labels = [
+            calculate_label_distribution(pop_df, leak_df, "label", "property_label")[0]
+            for pop_df, leak_df in zip(population_data, lira_data)
+        ]
+        rmia_labels = [
+            calculate_label_distribution(pop_df, leak_df, "label", "property_label")[0]
+            for pop_df, leak_df in zip(population_data, rmia_data)
+        ]
 
         def safe_mannwhitneyu(x, y):
             x = [val for val in x if not np.isnan(val) and not np.isinf(val)]
             y = [val for val in y if not np.isnan(val) and not np.isinf(val)]
-            if len(x) > 1 and len(y) > 1 and not (all(v == x[0] for v in x) and all(v == y[0] for v in y)):
+            if (
+                len(x) > 1
+                and len(y) > 1
+                and not (all(v == x[0] for v in x) and all(v == y[0] for v in y))
+            ):
                 return mannwhitneyu(x, y).pvalue
             return np.nan
 
@@ -72,10 +112,18 @@ def create_dataframe(representations: List[str], dataset: str, base_path: Path) 
     df = pd.DataFrame(data)
     return df
 
+
 if __name__ == "__main__":
     base_path = Path("...")
     datasets = ["ames", "bbb", "del", "herg"]
-    representations = ["ECFP4", "ECFP6", "graph", "MACCS", "rdkit", "transformer_matrix"]
+    representations = [
+        "ECFP4",
+        "ECFP6",
+        "graph",
+        "MACCS",
+        "rdkit",
+        "transformer_matrix",
+    ]
     output_folder = Path("...")
     output_folder.mkdir(parents=True, exist_ok=True)
 

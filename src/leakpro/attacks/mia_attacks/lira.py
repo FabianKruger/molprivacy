@@ -18,10 +18,7 @@ from sklearn.metrics import roc_curve
 class AttackLiRA(AbstractMIA):
     """Implementation of the LiRA attack."""
 
-    def __init__(self,
-                 handler: AbstractInputHandler,
-                 configs: dict
-                 ) -> None:
+    def __init__(self, handler: AbstractInputHandler, configs: dict) -> None:
         """Initialize the LiRA attack.
 
         Args:
@@ -69,7 +66,9 @@ class AttackLiRA(AbstractMIA):
         """Return a description of the attack."""
         title_str = "Likelihood Ratio Attack"
 
-        reference_str = "Carlini N, et al. Membership Inference Attacks From First Principles"
+        reference_str = (
+            "Carlini N, et al. Membership Inference Attacks From First Principles"
+        )
 
         summary_str = "LiRA is a membership inference attack based on rescaled logits of a black-box model"
 
@@ -87,26 +86,32 @@ class AttackLiRA(AbstractMIA):
             "detailed": detailed_str,
         }
 
-    def prepare_attack(self)->None:
+    def prepare_attack(self) -> None:
         """Prepares data to obtain metric on the target model and dataset, using signals computed on the auxiliary model/dataset.
 
         It selects a balanced subset of data samples from in-group and out-group members
         of the audit dataset, prepares the data for evaluation, and computes the logits
         for both shadow models and the target model.
         """
-        self.attack_data_indices = self.sample_indices_from_population(include_train_indices = self.online,
-                                                                       include_test_indices = self.online)
+        self.attack_data_indices = self.sample_indices_from_population(
+            include_train_indices=self.online, include_test_indices=self.online
+        )
 
+        self.shadow_model_indices = ShadowModelHandler().create_shadow_models(
+            num_models=self.num_shadow_models,
+            shadow_population=self.attack_data_indices,
+            training_fraction=self.training_data_fraction,
+            online=self.online,
+        )
 
-        self.shadow_model_indices = ShadowModelHandler().create_shadow_models(num_models = self.num_shadow_models,
-                                                                              shadow_population =  self.attack_data_indices,
-                                                                              training_fraction = self.training_data_fraction,
-                                                                              online = self.online)
-
-        self.shadow_models, _ = ShadowModelHandler().get_shadow_models(self.shadow_model_indices)
+        self.shadow_models, _ = ShadowModelHandler().get_shadow_models(
+            self.shadow_model_indices
+        )
 
         self.logger.info("Create masks for all IN samples")
-        self.in_indices_mask = ShadowModelHandler().get_in_indices_mask(self.shadow_model_indices, self.audit_dataset["data"])
+        self.in_indices_mask = ShadowModelHandler().get_in_indices_mask(
+            self.shadow_model_indices, self.audit_dataset["data"]
+        )
 
         self.audit_data = self.get_dataloader(self.audit_dataset["data"]).dataset
 
@@ -114,7 +119,9 @@ class AttackLiRA(AbstractMIA):
         if not self.online:
             count_in_samples = np.count_nonzero(self.in_indices_mask)
             if count_in_samples > 0:
-                self.logger.info(f"Some shadow model(s) contains {count_in_samples} IN samples in total for the model(s)")
+                self.logger.info(
+                    f"Some shadow model(s) contains {count_in_samples} IN samples in total for the model(s)"
+                )
                 self.logger.info("This is not an offline attack!")
 
         self.skip_indices = np.zeros(len(self.in_indices_mask), dtype=bool)
@@ -130,27 +137,49 @@ class AttackLiRA(AbstractMIA):
                     self.skip_indices[i] = True
 
             if no_out > 0 or no_in > 0:
-                self.logger.info(f"There are {no_out} audit examples with 0 OUT sample(s) and {no_in} 0 IN sample(s)")
+                self.logger.info(
+                    f"There are {no_out} audit examples with 0 OUT sample(s) and {no_in} 0 IN sample(s)"
+                )
                 self.logger.info("When using few shadow models in online attacks")
-                self.logger.info("some audit sample(s) mighthave a few or even 0 IN or OUT logits")
-                self.logger.info(f"In total {np.count_nonzero(self.skip_indices)} indices will be skipped!")
+                self.logger.info(
+                    "some audit sample(s) mighthave a few or even 0 IN or OUT logits"
+                )
+                self.logger.info(
+                    f"In total {np.count_nonzero(self.skip_indices)} indices will be skipped!"
+                )
 
             if len(self.audit_data) == np.sum(self.skip_indices):
-                raise ValueError("All audit samples are skipped. Please adjust the number of shadow models or the audit dataset.")
+                raise ValueError(
+                    "All audit samples are skipped. Please adjust the number of shadow models or the audit dataset."
+                )
 
         self.relevant_indices = np.where(~self.skip_indices)[0]
         self.audit_data = Subset(self.audit_data, self.relevant_indices)
-        new_number_in_members = np.sum(~self.skip_indices[:len(self.audit_dataset["in_members"])])
+        new_number_in_members = np.sum(
+            ~self.skip_indices[: len(self.audit_dataset["in_members"])]
+        )
         self.audit_dataset["in_members"] = np.arange(0, new_number_in_members)
-        self.audit_dataset["out_members"] = np.arange(new_number_in_members, len(self.audit_data))
+        self.audit_dataset["out_members"] = np.arange(
+            new_number_in_members, len(self.audit_data)
+        )
         self.in_indices_mask = self.in_indices_mask[~self.skip_indices]
         # Calculate logits for all shadow models
-        self.logger.info(f"Calculating the logits for all {self.num_shadow_models} shadow models")
-        self.shadow_models_logits = np.swapaxes(np.array(self.signal(self.shadow_models, self.audit_data, handler=self.handler)), 0, 1)
+        self.logger.info(
+            f"Calculating the logits for all {self.num_shadow_models} shadow models"
+        )
+        self.shadow_models_logits = np.swapaxes(
+            np.array(
+                self.signal(self.shadow_models, self.audit_data, handler=self.handler)
+            ),
+            0,
+            1,
+        )
 
         # Calculate logits for the target model
         self.logger.info("Calculating the logits for the target model")
-        self.target_logits = np.array(self.signal([self.target_model], self.audit_data, handler=self.handler)).squeeze()
+        self.target_logits = np.array(
+            self.signal([self.target_model], self.audit_data, handler=self.handler)
+        ).squeeze()
 
     def run_attack(self) -> Dict:
         """Runs the attack on the target model and dataset and assess privacy risks or data leakage.
@@ -171,12 +200,16 @@ class AttackLiRA(AbstractMIA):
         if self.fixed_variance:
             out_std = np.std(self.shadow_models_logits[~self.in_indices_mask].flatten())
             if self.online:
-                in_std = np.std(self.shadow_models_logits[self.in_indices_mask].flatten())
+                in_std = np.std(
+                    self.shadow_models_logits[self.in_indices_mask].flatten()
+                )
 
         # Iterate and extract logits from shadow models for each sample in the audit dataset
-        for i, (shadow_models_logits, mask) in tqdm(enumerate(zip(self.shadow_models_logits, self.in_indices_mask)),
-                                                    total=len(self.shadow_models_logits),
-                                                    desc="Processing samples"):
+        for i, (shadow_models_logits, mask) in tqdm(
+            enumerate(zip(self.shadow_models_logits, self.in_indices_mask)),
+            total=len(self.shadow_models_logits),
+            desc="Processing samples",
+        ):
 
             # Calculate the mean for OUT shadow model logits
             out_mean = np.mean(shadow_models_logits[~mask])
@@ -198,35 +231,59 @@ class AttackLiRA(AbstractMIA):
             else:
                 pr_in = 0
 
-            score.append(pr_in - pr_out)  # Append the calculated probability density value to the score list
+            score.append(
+                pr_in - pr_out
+            )  # Append the calculated probability density value to the score list
 
         score = np.asarray(score)  # Convert the list of scores to a numpy array
 
         # Generate thresholds based on the range of computed scores for decision boundaries
         self.thresholds = np.linspace(np.min(score), np.max(score), 1000)
         # Split the score array into two parts based on membership: in (training) and out (non-training)
-        self.in_member_signals = score[self.audit_dataset["in_members"]].reshape(-1,1)  # Scores for known training data members
-        self.out_member_signals = score[self.audit_dataset["out_members"]].reshape(-1,1)  # Scores for non-training data members
+        self.in_member_signals = score[self.audit_dataset["in_members"]].reshape(
+            -1, 1
+        )  # Scores for known training data members
+        self.out_member_signals = score[self.audit_dataset["out_members"]].reshape(
+            -1, 1
+        )  # Scores for non-training data members
 
         # Create prediction matrices by comparing each score against all thresholds
-        member_preds = np.less(self.in_member_signals, self.thresholds).T  # Predictions for training data members
-        non_member_preds = np.less(self.out_member_signals, self.thresholds).T  # Predictions for non-members
+        member_preds = np.less(
+            self.in_member_signals, self.thresholds
+        ).T  # Predictions for training data members
+        non_member_preds = np.less(
+            self.out_member_signals, self.thresholds
+        ).T  # Predictions for non-members
 
         # Concatenate the prediction results for a full dataset prediction
         # predictions = np.concatenate([member_preds, non_member_preds], axis=1)
 
         # Prepare true labels array, marking 1 for training data and 0 for non-training data
         true_labels = np.concatenate(
-            [np.ones(len(self.in_member_signals)), np.zeros(len(self.out_member_signals))]
+            [
+                np.ones(len(self.in_member_signals)),
+                np.zeros(len(self.out_member_signals)),
+            ]
         )
 
         # Combine all signal values for further analysis
-        signal_values = np.concatenate([self.in_member_signals, self.out_member_signals])
+        signal_values = np.concatenate(
+            [self.in_member_signals, self.out_member_signals]
+        )
 
-        write_true_positives_to_disc(dataset=self.audit_data, scores=signal_values, labels=true_labels, mask=~self.skip_indices, configs=self.configs, attack = "lira", higher_score_class_1 = False)
+        write_true_positives_to_disc(
+            dataset=self.audit_data,
+            scores=signal_values,
+            labels=true_labels,
+            mask=~self.skip_indices,
+            configs=self.configs,
+            attack="lira",
+            higher_score_class_1=False,
+        )
 
         # Return a result object containing predictions, true labels, and the signal values for further evaluation
-        signal_values = -signal_values # because in this attack implementation lower scores mean class 1
+        signal_values = (
+            -signal_values
+        )  # because in this attack implementation lower scores mean class 1
         fpr, tpr, _ = roc_curve(y_true=true_labels, y_score=signal_values)
         return {"fpr": fpr, "tpr": tpr}
-

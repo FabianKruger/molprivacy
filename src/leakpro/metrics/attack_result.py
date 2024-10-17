@@ -24,7 +24,7 @@ class AttackResult:
         predicted_labels: list,
         true_labels: list,
         predictions_proba: List[List[float]] = None,
-        signal_values:List[Any]=None,
+        signal_values: List[Any] = None,
         threshold: float = None,
     ) -> None:
         """Compute and stores the accuracy, ROC AUC score, and the confusion matrix for a metric.
@@ -80,10 +80,10 @@ class CombinedMetricResult:
         self,
         predicted_labels: list,
         true_labels: list,
-        predictions_proba:list=None,
-        signal_values:list=None,
+        predictions_proba: list = None,
+        signal_values: list = None,
         threshold: list = None,
-    )-> None:
+    ) -> None:
         """Compute and store the accuracy, ROC AUC score, and the confusion matrix for a metric.
 
         Args:

@@ -30,11 +30,13 @@ class QuantileRegressor(nn.Module):
             nn.MaxPool2d(2),
             nn.Conv2d(32, 64, kernel_size=3, padding=1),
             nn.ReLU(),
-            nn.MaxPool2d(2)
+            nn.MaxPool2d(2),
         )
-        self.regressor = nn.Linear(64 * 8 * 8, n_quantiles)  # Assuming we predict 3 quantiles
+        self.regressor = nn.Linear(
+            64 * 8 * 8, n_quantiles
+        )  # Assuming we predict 3 quantiles
 
-    def forward(self, x:torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass of the QuantileRegressor module.
 
         Args:
@@ -54,7 +56,7 @@ class QuantileRegressor(nn.Module):
 class PinballLoss(torch.nn.Module):
     """Pinball loss for quantile regression."""
 
-    def __init__(self, quantiles:list) -> None:
+    def __init__(self, quantiles: list) -> None:
         """Initialize the PinballLoss.
 
         Args:
@@ -65,7 +67,7 @@ class PinballLoss(torch.nn.Module):
         super(PinballLoss, self).__init__()
         self.quantiles = torch.tensor(quantiles, dtype=torch.float32)
 
-    def forward(self, predictions:torch.Tensor , targets:torch.Tensor) -> torch.Tensor:
+    def forward(self, predictions: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """Forward pass of the PinballLoss module.
 
         Args:
@@ -86,14 +88,11 @@ class PinballLoss(torch.nn.Module):
         losses = torch.max((quantiles * errors), ((quantiles - 1) * errors))
         return torch.mean(torch.sum(losses, dim=1))
 
+
 class AttackQMIA(AbstractMIA):
     """Implementation of the RMIA attack."""
 
-    def __init__(
-        self,
-        handler: AbstractInputHandler,
-        configs: dict
-    ) -> None:
+    def __init__(self, handler: AbstractInputHandler, configs: dict) -> None:
         """Initialize the QMIA attack.
 
         Args:
@@ -111,9 +110,12 @@ class AttackQMIA(AbstractMIA):
         self.signal = ModelRescaledLogits()
         self.quantile_regressor = QuantileRegressor(len(self.quantiles))
 
-    def _configure_attack(self, configs:dict) -> None:
+    def _configure_attack(self, configs: dict) -> None:
         self.training_data_fraction = configs.get("training_data_fraction", 0.5)
-        self.quantiles = configs.get("quantiles", [0, 0.5, 0.9, 0.95, 0.99, 0.995, 0.999, 0.9995, 0.9999, 0.99995, 0.99999])
+        self.quantiles = configs.get(
+            "quantiles",
+            [0, 0.5, 0.9, 0.95, 0.99, 0.995, 0.999, 0.9995, 0.9999, 0.99995, 0.99999],
+        )
         self.epochs = configs.get("epochs", 100)
 
         # Define the validation dictionary as: {parameter_name: (parameter, min_value, max_value)}
@@ -122,14 +124,16 @@ class AttackQMIA(AbstractMIA):
             "max_quantile": (max(self.quantiles), min(self.quantiles), 1.0),
             "num_quantiles": (len(self.quantiles), 1, None),
             "epochs": (self.epochs, 0, None),
-            "training_data_fraction": (self.training_data_fraction, 0, 1)
+            "training_data_fraction": (self.training_data_fraction, 0, 1),
         }
 
         # Validate parameters
         for param_name, (param_value, min_val, max_val) in validation_dict.items():
             self._validate_config(param_name, param_value, min_val, max_val)
 
-    def _validate_config(self, name: str, value: float, min_val: float, max_val: float) -> None:
+    def _validate_config(
+        self, name: str, value: float, min_val: float, max_val: float
+    ) -> None:
         if not (min_val <= value <= (max_val if max_val is not None else value)):
             raise ValueError(f"{name} must be between {min_val} and {max_val}")
 
@@ -156,37 +160,54 @@ class AttackQMIA(AbstractMIA):
         """
         # sample dataset to train quantile regressor
         self.logger.info("Preparing attack data for training the quantile regressor")
-        self.attack_data_indices = self.sample_indices_from_population(include_train_indices = False,
-                                                                       include_test_indices = False)
+        self.attack_data_indices = self.sample_indices_from_population(
+            include_train_indices=False, include_test_indices=False
+        )
 
         # subsample the attack data based on the fraction
-        self.logger.info(f"Subsampling attack data from {len(self.attack_data_indices)} points")
+        self.logger.info(
+            f"Subsampling attack data from {len(self.attack_data_indices)} points"
+        )
         n_points = int(self.training_data_fraction * len(self.attack_data_indices))
-        attack_data = self.sample_data_from_dataset(self.attack_data_indices, n_points).dataset
-        self.logger.info(f"Number of attack data points after subsampling: {len(self.attack_data_indices)}")
+        attack_data = self.sample_data_from_dataset(
+            self.attack_data_indices, n_points
+        ).dataset
+        self.logger.info(
+            f"Number of attack data points after subsampling: {len(self.attack_data_indices)}"
+        )
 
         # create attack dataset
         attack_data = self.population.subset(self.attack_data_indices)
 
         # create labels and change dataset to be used for regression
-        regression_labels = np.array(self.signal([self.target_model], attack_data)).squeeze()
+        regression_labels = np.array(
+            self.signal([self.target_model], attack_data)
+        ).squeeze()
         attack_data.y = regression_labels
         attack_data.task_type = "regression"
-        attack_dataloader = DataLoader(attack_data, batch_size=64, shuffle=True,)
+        attack_dataloader = DataLoader(
+            attack_data,
+            batch_size=64,
+            shuffle=True,
+        )
 
         # train quantile regressor
         self.logger.info("Training the quantile regressor")
-        optimizer = torch.optim.Adam(self.quantile_regressor.parameters(), lr=1e-3, weight_decay=1e-4)
+        optimizer = torch.optim.Adam(
+            self.quantile_regressor.parameters(), lr=1e-3, weight_decay=1e-4
+        )
         criterion = PinballLoss(self.quantiles)
-        self.train_quantile_regressor(attack_dataloader, criterion, optimizer, self.epochs)
+        self.train_quantile_regressor(
+            attack_dataloader, criterion, optimizer, self.epochs
+        )
         self.logger.info("Training of quantile regressor completed")
 
     def train_quantile_regressor(
         self,
         attack_dataloader: DataLoader,
-        criterion:torch.nn.Module,
-        optimizer:torch.optim,
-        epochs: int
+        criterion: torch.nn.Module,
+        optimizer: torch.optim,
+        epochs: int,
     ) -> None:
         """Train the quantile regressor model.
 
@@ -202,7 +223,7 @@ class AttackQMIA(AbstractMIA):
             None
 
         """
-        device = ("cuda" if torch.cuda.is_available() else "cpu")
+        device = "cuda" if torch.cuda.is_available() else "cpu"
         self.quantile_regressor.to(device)
         self.quantile_regressor.train()
 
@@ -213,7 +234,9 @@ class AttackQMIA(AbstractMIA):
             self.quantile_regressor.train()
             for data, target in attack_dataloader:
                 # Move data to the device
-                data, target = data.to(device, non_blocking=True), target.to(  # noqa: PLW2901
+                data, target = data.to(
+                    device, non_blocking=True
+                ), target.to(  # noqa: PLW2901
                     device, non_blocking=True
                 )
                 # Cast target to long tensor
@@ -253,7 +276,9 @@ class AttackQMIA(AbstractMIA):
 
         """
         audit_dataset = self.get_dataloader(self.audit_dataset["data"]).dataset
-        self.target_logits = np.array(self.signal([self.target_model], audit_dataset)).squeeze()
+        self.target_logits = np.array(
+            self.signal([self.target_model], audit_dataset)
+        ).squeeze()
 
         audit_dataloader = DataLoader(audit_dataset, batch_size=64, shuffle=False)
         self.logger.info("Running the attack on the target model")
@@ -277,9 +302,7 @@ class AttackQMIA(AbstractMIA):
                 np.zeros(len(self.audit_dataset["out_members"])),
             ]
         )
-        signal_values = np.hstack(
-            [self.in_member_signals, self.out_member_signals]
-        )
+        signal_values = np.hstack([self.in_member_signals, self.out_member_signals])
 
         # compute ROC, TP, TN etc
         return CombinedMetricResult(
@@ -288,5 +311,3 @@ class AttackQMIA(AbstractMIA):
             predictions_proba=None,
             signal_values=signal_values,
         )
-
-

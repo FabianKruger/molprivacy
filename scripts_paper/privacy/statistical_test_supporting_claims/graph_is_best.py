@@ -2,19 +2,28 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 
+
 def extract_highest_tpr(file_path: Path, target_fpr: float) -> float:
     """Extract the highest TPR value for the closest FPR to the target FPR in the given file."""
     df = pd.read_csv(file_path)
-    fpr_df = df[df['fpr'] == target_fpr]
-    
+    fpr_df = df[df["fpr"] == target_fpr]
+
     if not fpr_df.empty:
-        return fpr_df['tpr'].max()
+        return fpr_df["tpr"].max()
     else:
         return None
 
+
 def main():
     base_dir = Path("...")
-    representations = ["ECFP4", "ECFP6", "graph", "MACCS", "rdkit", "transformer_matrix"]
+    representations = [
+        "ECFP4",
+        "ECFP6",
+        "graph",
+        "MACCS",
+        "rdkit",
+        "transformer_matrix",
+    ]
     attacks = ["lira", "rmia"]
     datasets = ["bbb", "ames", "del", "herg"]
 
@@ -29,7 +38,9 @@ def main():
         dataset_other_median_values = []
 
         # Store TPR values for each representation and attack
-        tpr_values = {attack: {rep: [] for rep in representations} for attack in attacks}
+        tpr_values = {
+            attack: {rep: [] for rep in representations} for attack in attacks
+        }
 
         for rep in representations:
             for attack in attacks:
@@ -38,7 +49,9 @@ def main():
                 for job_num in range(1, 21):
                     job_folder = base_dir / dataset / f"job_{job_num}"
 
-                    csv_file = job_folder / f"..." / "privacy" / "results" / attack / "ROC.csv"
+                    csv_file = (
+                        job_folder / f"..." / "privacy" / "results" / attack / "ROC.csv"
+                    )
 
                     try:
                         tpr_value = extract_highest_tpr(csv_file, fpr_threshold)
@@ -56,8 +69,14 @@ def main():
         # Analyze TPR values per dataset
         for attack in attacks:
             graph_tpr = np.median(tpr_values[attack]["graph"])
-            other_medians = [np.median(tpr_values[attack][rep]) for rep in representations if rep != "graph"]
-            avg_other_median = np.mean(other_medians)  # Average of the medians for other representations
+            other_medians = [
+                np.median(tpr_values[attack][rep])
+                for rep in representations
+                if rep != "graph"
+            ]
+            avg_other_median = np.mean(
+                other_medians
+            )  # Average of the medians for other representations
 
             # Check if "graph" has the lowest TPR
             if graph_tpr == min([graph_tpr] + other_medians):
@@ -71,9 +90,13 @@ def main():
         if dataset_other_median_values:
             dataset_avg_graph_median = np.mean(dataset_graph_median_values)
             dataset_avg_other_median = np.mean(dataset_other_median_values)
-            
+
             if dataset_avg_other_median > 0:
-                dataset_percentage_lower = (dataset_avg_other_median - dataset_avg_graph_median) / dataset_avg_other_median * 100
+                dataset_percentage_lower = (
+                    (dataset_avg_other_median - dataset_avg_graph_median)
+                    / dataset_avg_other_median
+                    * 100
+                )
                 dataset_percentage_lowers.append(dataset_percentage_lower)
 
     # Calculate overall statistics
@@ -81,10 +104,15 @@ def main():
         mean_percentage_lower = np.mean(dataset_percentage_lowers)
         std_percentage_lower = np.std(dataset_percentage_lowers)
 
-        print(f"'Graph' representation had the lowest TPR in {graph_lowest_count} cases out of {len(datasets) * len(attacks)} total cases.")
-        print(f"The median TPR for 'graph' was, on average, {mean_percentage_lower:.2f}% lower than the average of medians TPR of all other representations across all datasets (STD: {std_percentage_lower:.2f}%).")
+        print(
+            f"'Graph' representation had the lowest TPR in {graph_lowest_count} cases out of {len(datasets) * len(attacks)} total cases."
+        )
+        print(
+            f"The median TPR for 'graph' was, on average, {mean_percentage_lower:.2f}% lower than the average of medians TPR of all other representations across all datasets (STD: {std_percentage_lower:.2f}%)."
+        )
     else:
         print("No data available to calculate statistics for 'graph' representation.")
+
 
 if __name__ == "__main__":
     main()

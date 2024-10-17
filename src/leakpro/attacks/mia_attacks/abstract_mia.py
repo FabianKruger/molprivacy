@@ -25,13 +25,13 @@ class AbstractMIA(ABC):
     population_size = None
     target_model = None
     audit_dataset = None
-    handler=None
+    handler = None
     _initialized = False
 
     def __init__(
         self,
         handler: AbstractInputHandler,
-    )->None:
+    ) -> None:
         """Initialize the AttackAbstract class.
 
         Args:
@@ -43,14 +43,19 @@ class AbstractMIA(ABC):
         if not AbstractMIA._initialized:
             AbstractMIA.population = handler.population
             AbstractMIA.population_size = handler.population_size
-            AbstractMIA.target_model = PytorchModel(handler.target_model, handler.get_criterion())
+            AbstractMIA.target_model = PytorchModel(
+                handler.target_model, handler.get_criterion()
+            )
             AbstractMIA.audit_dataset = {
                 # Assuming train_indices and test_indices are arrays of indices, not the actual data
                 "data": np.concatenate((handler.train_indices, handler.test_indices)),
                 # in_members will be an array from 0 to the number of training indices - 1
                 "in_members": np.arange(len(handler.train_indices)),
                 # out_members will start after the last training index and go up to the number of test indices - 1
-                "out_members": np.arange(len(handler.train_indices),len(handler.train_indices)+len(handler.test_indices)),
+                "out_members": np.arange(
+                    len(handler.train_indices),
+                    len(handler.train_indices) + len(handler.test_indices),
+                ),
             }
             AbstractMIA.handler = handler
             self._validate_shared_quantities()
@@ -60,7 +65,7 @@ class AbstractMIA(ABC):
         self.logger = handler.logger
         self.signal_data = []
 
-    def _validate_shared_quantities(self)->None:
+    def _validate_shared_quantities(self) -> None:
         """Validate the shared quantities used by the attack."""
         if AbstractMIA.population is None:
             raise ValueError("Population dataset not found.")
@@ -78,10 +83,7 @@ class AbstractMIA(ABC):
             raise ValueError("Audit dataset not found.")
 
     def sample_indices_from_population(
-        self,
-        *,
-        include_train_indices: bool = False,
-        include_test_indices: bool = False
+        self, *, include_train_indices: bool = False, include_test_indices: bool = False
     ) -> np.ndarray:
         """Function to get attack data indices from the population.
 
@@ -99,17 +101,20 @@ class AbstractMIA(ABC):
 
         not_allowed_indices = np.array([])
         if not include_train_indices:
-            not_allowed_indices = np.hstack([not_allowed_indices, self.handler.train_indices])
+            not_allowed_indices = np.hstack(
+                [not_allowed_indices, self.handler.train_indices]
+            )
 
         if not include_test_indices:
-            not_allowed_indices = np.hstack([not_allowed_indices, self.handler.test_indices])
+            not_allowed_indices = np.hstack(
+                [not_allowed_indices, self.handler.test_indices]
+            )
 
         available_index = np.setdiff1d(all_index, not_allowed_indices)
         data_size = len(available_index)
         return np.random.choice(available_index, data_size, replace=False)
 
-
-    def get_dataloader(self, data:np.ndarray, batch_size:int=None)->DataLoader:
+    def get_dataloader(self, data: np.ndarray, batch_size: int = None) -> DataLoader:
         """Function to get a dataloader from the dataset.
 
         Args:
@@ -122,9 +127,13 @@ class AbstractMIA(ABC):
             Dataloader: The sampled data.
 
         """
-        return self.handler.get_dataloader(data) if batch_size is None else self.handler.get_dataloader(data, batch_size)
+        return (
+            self.handler.get_dataloader(data)
+            if batch_size is None
+            else self.handler.get_dataloader(data, batch_size)
+        )
 
-    def sample_data_from_dataset(self, data:np.ndarray, size:int)->DataLoader:
+    def sample_data_from_dataset(self, data: np.ndarray, size: int) -> DataLoader:
         """Function to sample from the dataset.
 
         Args:
@@ -141,9 +150,8 @@ class AbstractMIA(ABC):
             raise ValueError("Size of the sample is greater than the size of the data.")
         return self.get_dataloader(np.random.choice(data, size, replace=False))
 
-
     @property
-    def population(self)-> List:
+    def population(self) -> List:
         """Get the population used for the attack.
 
         Returns
@@ -154,7 +162,7 @@ class AbstractMIA(ABC):
         return AbstractMIA.population
 
     @property
-    def population_size(self)-> int:
+    def population_size(self) -> int:
         """Get the size of the population used for the attack.
 
         Returns
@@ -187,7 +195,7 @@ class AbstractMIA(ABC):
         return AbstractMIA.audit_dataset
 
     @property
-    def train_indices(self)-> np.ndarray:
+    def train_indices(self) -> np.ndarray:
         """Get the training indices of the audit dataset.
 
         Returns
@@ -197,9 +205,8 @@ class AbstractMIA(ABC):
         """
         return AbstractMIA.audit_dataset["in_members"]
 
-
     @property
-    def test_indices(self)-> np.ndarray:
+    def test_indices(self) -> np.ndarray:
         """Get the test indices of the audit dataset.
 
         Returns
@@ -210,7 +217,7 @@ class AbstractMIA(ABC):
         return AbstractMIA.audit_dataset["out_members"]
 
     @abstractmethod
-    def _configure_attack(self, configs:dict)->None:
+    def _configure_attack(self, configs: dict) -> None:
         """Configure the attack.
 
         Args:
@@ -220,7 +227,9 @@ class AbstractMIA(ABC):
         """
         pass
 
-    def _validate_config(self, name: str, value: float, min_val: float, max_val: float) -> None:
+    def _validate_config(
+        self, name: str, value: float, min_val: float, max_val: float
+    ) -> None:
         if not (min_val <= value <= (max_val if max_val is not None else value)):
             raise ValueError(f"{name} must be between {min_val} and {max_val}")
 

@@ -4,7 +4,10 @@ from torch.utils.data import DataLoader, TensorDataset
 from typing import Optional, List
 from abc import ABC, abstractmethod
 from moreno.data_modules.datasets_and_collate_functions import (
-    mol_collate_fn, GraphDataset, CNN_collate_fn, CNNDataset
+    mol_collate_fn,
+    GraphDataset,
+    CNN_collate_fn,
+    CNNDataset,
 )
 from moreno.utils.convert_representations import convert_dataset
 import pandas as pd
@@ -30,7 +33,9 @@ class CustomDataModule(L.LightningDataModule, ABC):
         self.num_workers = num_workers
         self.prefetch_factor = prefetch_factor
         self.train_dataset: Optional[TensorDataset | GraphDataset | CNNDataset] = None
-        self.validation_dataset: Optional[TensorDataset | GraphDataset | CNNDataset] = None
+        self.validation_dataset: Optional[TensorDataset | GraphDataset | CNNDataset] = (
+            None
+        )
         self.test_dataset: Optional[TensorDataset | GraphDataset | CNNDataset] = None
         self.input_vec_dim: int = 0
 
@@ -96,7 +101,9 @@ class CustomDataModule(L.LightningDataModule, ABC):
             # sampler = sampler
         )
 
-    def convert_dataset(self, data: pd.DataFrame) -> TensorDataset | GraphDataset | CNNDataset:
+    def convert_dataset(
+        self, data: pd.DataFrame
+    ) -> TensorDataset | GraphDataset | CNNDataset:
         """Converting a pandas dataframe to a pytorch tensor dataset with the smiles represented as what is specified in self.representation
 
         Args:
@@ -108,6 +115,8 @@ class CustomDataModule(L.LightningDataModule, ABC):
         Returns:
             Dataset: pytorch dataset with smiles represented as what is specified in self.representation
         """
-        dataset, input_vec_dim = convert_dataset(data=data, representation= self.representation)
+        dataset, input_vec_dim = convert_dataset(
+            data=data, representation=self.representation
+        )
         self.input_vec_dim = input_vec_dim
         return dataset

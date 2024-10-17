@@ -43,9 +43,11 @@ def clean_smiles_df(raw_smiles: pd.DataFrame, verbose: bool = False) -> pd.DataF
 
             # make canonical smiles
             can_smiles = Chem.MolToSmiles(mol, canonical=True)
-            if len(can_smiles)>200:
+            if len(can_smiles) > 200:
                 if verbose:
-                    print(f"The canonical version of the following smiles was too long: {smiles}")
+                    print(
+                        f"The canonical version of the following smiles was too long: {smiles}"
+                    )
                 indices_to_drop.append(index)
                 continue
             assert isinstance(

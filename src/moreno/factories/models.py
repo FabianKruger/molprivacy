@@ -32,7 +32,14 @@ class ModelFactory:
 
     def create_optimizer(self) -> None:
         # expandable with or statemet
-        if self.representation in ["ECFP4", "ECFP6", "MACCS", "rdkit", "transformer_vector", "custom"]:
+        if self.representation in [
+            "ECFP4",
+            "ECFP6",
+            "MACCS",
+            "rdkit",
+            "transformer_vector",
+            "custom",
+        ]:
             model_type = "MLP"
         elif self.representation == "graph":
             model_type = "MPNN"
@@ -40,7 +47,7 @@ class ModelFactory:
             model_type = "CNN"
         else:
             raise NotImplementedError
-    
+
         folder_name = "model"
         db_name = "optimization.db"
         training_log = "training"
@@ -74,7 +81,7 @@ class ModelFactory:
                 result_db_name=db_name,
                 training_log_name=training_log,
                 trained_model_name=trained_model_name,
-                optimization_time=self.hyperparameter_optimization_time,                
+                optimization_time=self.hyperparameter_optimization_time,
             )
         else:
             raise NotImplementedError
@@ -85,9 +92,7 @@ class ModelFactory:
         self.optimizer.get_optimized_hyperparameters()
         self.optimizer.save_best_hyperparameter()
         self.optimizer.train_optimized_model()
-    
+
     def test_model(self):
         assert self.optimizer is not None
         self.optimizer.test_model()
-
-

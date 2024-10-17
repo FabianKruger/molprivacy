@@ -11,6 +11,7 @@ from leakpro.model import Model
 import torch
 from leakpro.user_inputs.abstract_input_handler import AbstractInputHandler
 from torch.utils.data import Dataset
+
 ########################################################################################################################
 # SIGNAL CLASS
 ########################################################################################################################
@@ -80,7 +81,7 @@ class ModelLogits(Signal):
         -------
             The signal value.
 
-        """        # Compute the signal for each model
+        """  # Compute the signal for each model
         results = []
         for model in tqdm(models):
             # Initialize a list to store the logits for the current model
@@ -101,6 +102,7 @@ class ModelLogits(Signal):
             results.append(model_logits)
 
         return results
+
 
 ########################################################################################################################
 # MODEL_NEGATIVERESCALEDLOGIT CLASS
@@ -149,9 +151,11 @@ class ModelNegativeRescaledLogits(Signal):
             model_logits = np.array(model_logits)
         return model_logits
 
+
 ########################################################################################################################
 # MODEL_RESCALEDLOGIT CLASS
 ########################################################################################################################
+
 
 class ModelRescaledLogits(Signal):
     """Inherits from the Signal class, used to represent any type of signal that can be obtained from a Model and/or a Dataset.
@@ -177,12 +181,13 @@ class ModelRescaledLogits(Signal):
             The signal value.
 
         """
-        model_logits= []
+        model_logits = []
         for model in tqdm(models):
             logits = model.get_rescaled_logits(datasets, handler)
             model_logits.append(logits)
         model_logits = np.array(model_logits)
         return model_logits
+
 
 ########################################################################################################################
 # MODEL_INTERMEDIATE_OUTPUT CLASS

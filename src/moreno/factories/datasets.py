@@ -6,9 +6,16 @@ from moreno.data_modules.custom_datamodule import (
 )
 from typing import List, Optional
 
+
 class DataFactory:
 
-    def __init__(self, dataset: str, split: List[float], representation: str, paths: Optional[List[str]] = None) -> None:
+    def __init__(
+        self,
+        dataset: str,
+        split: List[float],
+        representation: str,
+        paths: Optional[List[str]] = None,
+    ) -> None:
         self.dataset = dataset
         self.split = split
         self.representation = representation
@@ -21,17 +28,22 @@ class DataFactory:
         datamodule = None
         if self.dataset in ["bbb", "ames", "del", "herg"]:
             datamodule = PreInstalledDataModule(
-                representation=self.representation, split=self.split, dataset_name=self.dataset
+                representation=self.representation,
+                split=self.split,
+                dataset_name=self.dataset,
             )
         elif self.dataset == "file":
             assert self.paths is not None
             datamodule = UserDataModule(
-                representation=self.representation, split=self.split, dataset_paths=self.paths
+                representation=self.representation,
+                split=self.split,
+                dataset_paths=self.paths,
             )
         else:
-            raise NotImplementedError(f"Dataset {self.dataset} is not supported by the datafactory yet.")
+            raise NotImplementedError(
+                f"Dataset {self.dataset} is not supported by the datafactory yet."
+            )
 
         datamodule.prepare_data()
         datamodule.setup(stage="fit")
         return datamodule
-

@@ -30,11 +30,12 @@ def singleton(cls):  # noqa: ANN001, ANN201
 
     return get_instance
 
+
 @singleton
 class DistillationModelHandler(ModelHandler):
     """A class handling the creation, training, and loading of distillation models."""
 
-    def __init__(self, handler: AbstractInputHandler)->None:
+    def __init__(self, handler: AbstractInputHandler) -> None:
         """Initialize the DistillationModelHandler.
 
         Args:
@@ -46,7 +47,7 @@ class DistillationModelHandler(ModelHandler):
         self.configs = handler.configs["distillation_model"]
 
         module_path = self.configs.get("module_path", None)
-        model_class_path =  self.configs.get("model_class", None)
+        model_class_path = self.configs.get("model_class", None)
         self.storage_path = self.configs.get("storage_path", None)
         self.batch_size = self.configs.get("batch_size", 32)
         self.epochs = self.configs.get("epochs", 10)
@@ -85,7 +86,7 @@ class DistillationModelHandler(ModelHandler):
 
         self.model_pairs = {}
 
-    def add_student_teacher_pair(self, name:str, teacher:Module)->None:
+    def add_student_teacher_pair(self, name: str, teacher: Module) -> None:
         """Add a student-teacher pair to the model handler.
 
         Args:
@@ -99,14 +100,18 @@ class DistillationModelHandler(ModelHandler):
 
         """
         student, _, optimizer = self._get_model_criterion_optimizer()
-        self.model_pairs[name] = {"student": student, "teacher": teacher, "optimizer": optimizer}
+        self.model_pairs[name] = {
+            "student": student,
+            "teacher": teacher,
+            "optimizer": optimizer,
+        }
 
     def distill_model(
         self,
-        model_pair_name:str,
-        num_trajectory_epochs:int,
+        model_pair_name: str,
+        num_trajectory_epochs: int,
         distillation_data_indices: np.ndarray,
-        label_only:bool=False
+        label_only: bool = False,
     ) -> list[Module]:
         """Create and train shadow models based on the blueprint.
 
@@ -128,7 +133,7 @@ class DistillationModelHandler(ModelHandler):
         model_pair = self.model_pairs[model_pair_name]
         student_model = model_pair["student"]
         teacher_model = model_pair["teacher"]
-        optimizer = model_pair["optimizer"] # optimizer for student model
+        optimizer = model_pair["optimizer"]  # optimizer for student model
 
         # Get the device for training
         gpu_or_cpu = device("cuda" if cuda.is_available() else "cpu")
@@ -137,8 +142,12 @@ class DistillationModelHandler(ModelHandler):
         student_model.train()
         teacher_model.eval()
 
-        data_loader = self.handler.get_dataloader(distillation_data_indices, self.batch_size)
-        self.logger.info(f"Created distillation dataset with size {len(distillation_data_indices)}")
+        data_loader = self.handler.get_dataloader(
+            distillation_data_indices, self.batch_size
+        )
+        self.logger.info(
+            f"Created distillation dataset with size {len(distillation_data_indices)}"
+        )
 
         distillation_checkpoints = []
 
@@ -146,7 +155,9 @@ class DistillationModelHandler(ModelHandler):
             epoch_loss = 0
 
             # Loop over the training set
-            for data, target_labels in tqdm(data_loader, desc=f"Epoch {d+1}/{num_trajectory_epochs}"):
+            for data, target_labels in tqdm(
+                data_loader, desc=f"Epoch {d+1}/{num_trajectory_epochs}"
+            ):
 
                 # Move data to the device
                 data = data.to(gpu_or_cpu, non_blocking=True)
@@ -158,19 +169,27 @@ class DistillationModelHandler(ModelHandler):
 
                 # TODO: add hopskipjump distance here
                 if label_only:
-                    loss = CrossEntropyLoss()(output_student, target_labels) # TODO: I think this is wrong
+                    loss = CrossEntropyLoss()(
+                        output_student, target_labels
+                    )  # TODO: I think this is wrong
                 else:
-                    loss = KLDivLoss(reduction="batchmean")(F.log_softmax(output_student, dim=1),
-                                                            F.softmax(output_teacher.float(), dim=1))
+                    loss = KLDivLoss(reduction="batchmean")(
+                        F.log_softmax(output_student, dim=1),
+                        F.softmax(output_teacher.float(), dim=1),
+                    )
                 optimizer.zero_grad(set_to_none=True)
                 loss.backward()
                 optimizer.step()
                 epoch_loss += loss.item()
 
-            self.logger.info(f"Epoch {d+1}/{num_trajectory_epochs} | Loss: {epoch_loss}")
+            self.logger.info(
+                f"Epoch {d+1}/{num_trajectory_epochs} | Loss: {epoch_loss}"
+            )
             with open(f"{self.storage_path}/{model_pair_name}_{d}.pkl", "wb") as f:
                 save(student_model.state_dict(), f)
-                self.logger.info(f"Saved distillation model for epoch {d} to {self.storage_path}")
+                self.logger.info(
+                    f"Saved distillation model for epoch {d} to {self.storage_path}"
+                )
             distillation_checkpoints.append(student_model)
 
             self.logger.info("Storing metadata for distillation model")
@@ -183,9 +202,13 @@ class DistillationModelHandler(ModelHandler):
             meta_data["epochs"] = self.epochs
             meta_data["label_only"] = label_only
 
-            with open(f"{self.storage_path}/{model_pair_name}_metadata_{d}.pkl", "wb") as f:
+            with open(
+                f"{self.storage_path}/{model_pair_name}_metadata_{d}.pkl", "wb"
+            ) as f:
                 pickle.dump(meta_data, f)
 
-            self.logger.info(f"Metadata for distillation model stored in {self.storage_path}")
+            self.logger.info(
+                f"Metadata for distillation model stored in {self.storage_path}"
+            )
 
         return distillation_checkpoints

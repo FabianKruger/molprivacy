@@ -81,7 +81,6 @@ class MPNNOptimizer(Optimizer[MPNNLightning]):
         callback = PyTorchLightningPruningCallback(trial, monitor="val_loss")
         early_stopping_callback = EarlyStopping(monitor="val_loss", patience=2)
 
-
         # instantiate trainer
         trainer = L.Trainer(
             logger=False,

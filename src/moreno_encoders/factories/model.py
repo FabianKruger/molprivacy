@@ -7,7 +7,8 @@ from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping
 from moreno.config import Config
 import sys
 
-class ModelFactory():
+
+class ModelFactory:
 
     def __init__(self):
         data_dir = Config.get_package_data_dir()
@@ -16,8 +17,10 @@ class ModelFactory():
 
     def train_model(self, model_type: str):
 
-        if (self.model_dir / model_type).exists(): 
-            print(f"Model already exists. If you want to re-train it, please run `moreno_encoder delete-model {model_type}` first.")
+        if (self.model_dir / model_type).exists():
+            print(
+                f"Model already exists. If you want to re-train it, please run `moreno_encoder delete-model {model_type}` first."
+            )
             sys.exit()
 
         datamodule = Seq2seqDataModule()
@@ -30,18 +33,24 @@ class ModelFactory():
             model = SeqToSeqTransformerVector(char2idx)
         elif model_type == "transformer_matrix":
             model = SeqToSeqTransformerMatrix(char2idx)
-        else: 
+        else:
             raise NotImplementedError(f"Model type {model_type} is not supported.")
         logger = CSVLogger(self.model_dir, name=(model_type + "_training"))
 
         callbacks = []
-        callbacks.append(ModelCheckpoint(dirpath=self.model_dir,
-                                         monitor='average_validation_loss_per_token',
-                                         mode='min',
-                                         filename=model_type))
-        callbacks.append(EarlyStopping(monitor='average_validation_loss_per_token',
-                                       mode='min',
-                                       patience=3))
-        
+        callbacks.append(
+            ModelCheckpoint(
+                dirpath=self.model_dir,
+                monitor="average_validation_loss_per_token",
+                mode="min",
+                filename=model_type,
+            )
+        )
+        callbacks.append(
+            EarlyStopping(
+                monitor="average_validation_loss_per_token", mode="min", patience=3
+            )
+        )
+
         trainer = L.Trainer(callbacks=callbacks, max_epochs=20, logger=logger)
         trainer.fit(model, datamodule)

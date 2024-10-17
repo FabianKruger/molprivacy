@@ -19,7 +19,9 @@ from leakpro.user_inputs.abstract_input_handler import AbstractInputHandler
 class Model(ABC):
     """Interface to query a model without any assumption on how it is implemented."""
 
-    def __init__(self, model_obj: torch.nn.Module, loss_fn: torch.nn.modules.loss._Loss) -> None:
+    def __init__(
+        self, model_obj: torch.nn.Module, loss_fn: torch.nn.modules.loss._Loss
+    ) -> None:
         """Initialize the Model.
 
         Args:
@@ -32,7 +34,7 @@ class Model(ABC):
         self.loss_fn = loss_fn
 
     @abstractmethod
-    def get_logits(self, batch_samples:np.ndarray) -> np.ndarray:
+    def get_logits(self, batch_samples: np.ndarray) -> np.ndarray:
         """Get the model output from a given input.
 
         Args:
@@ -47,7 +49,12 @@ class Model(ABC):
         pass
 
     @abstractmethod
-    def get_loss(self, batch_samples:np.ndarray, batch_labels: np.ndarray, per_point:bool=True) -> np.ndarray:
+    def get_loss(
+        self,
+        batch_samples: np.ndarray,
+        batch_labels: np.ndarray,
+        per_point: bool = True,
+    ) -> np.ndarray:
         """Get the model loss on a given input and an expected output.
 
         Args:
@@ -64,7 +71,9 @@ class Model(ABC):
         pass
 
     @abstractmethod
-    def get_grad(self, batch_samples:np.ndarray, batch_labels:np.ndarray) -> np.ndarray:
+    def get_grad(
+        self, batch_samples: np.ndarray, batch_labels: np.ndarray
+    ) -> np.ndarray:
         """Get the gradient of the model loss with respect to the model parameters, given an input and an expected output.
 
         Args:
@@ -80,10 +89,9 @@ class Model(ABC):
         pass
 
     @abstractmethod
-    def get_intermediate_outputs(self,
-                                 layers:List[int],
-                                 batch_samples:np.ndarray,
-                                 forward_pass: bool=True) -> List[np.ndarray]:
+    def get_intermediate_outputs(
+        self, layers: List[int], batch_samples: np.ndarray, forward_pass: bool = True
+    ) -> List[np.ndarray]:
         """Get the intermediate output of layers (a.k.a. features), on a given input.
 
         Args:
@@ -100,13 +108,16 @@ class Model(ABC):
         """
         pass
 
+
 class PytorchModel(Model):
     """Inherits from the Model class, an interface to query a model without any assumption on how it is implemented.
 
     This particular class is to be used with pytorch models.
     """
 
-    def __init__(self, model_obj:torch.nn.Module, loss_fn:torch.nn.modules.loss._Loss)->None:
+    def __init__(
+        self, model_obj: torch.nn.Module, loss_fn: torch.nn.modules.loss._Loss
+    ) -> None:
         """Initialize the PytorchModel.
 
         Args:
@@ -124,13 +135,15 @@ class PytorchModel(Model):
         # Add hooks to the layers (to access their value during a forward pass)
         self.intermediate_outputs = {}
         for _, layer in enumerate(list(self.model_obj._modules.keys())):
-            getattr(self.model_obj, layer).register_forward_hook(self.__forward_hook(layer))
+            getattr(self.model_obj, layer).register_forward_hook(
+                self.__forward_hook(layer)
+            )
 
         # Create a second loss function, per point
         self.loss_fn_no_reduction = deepcopy(loss_fn)
         self.loss_fn_no_reduction.reduction = "none"
 
-    def get_logits(self, batch_samples:np.ndarray)->np.ndarray:
+    def get_logits(self, batch_samples: np.ndarray) -> np.ndarray:
         """Get the model output from a given input.
 
         Args:
@@ -153,7 +166,12 @@ class PytorchModel(Model):
             batch_samples = batch_samples.to(device)
         return self.model_obj(batch_samples).detach().cpu().numpy()
 
-    def get_loss(self, batch_samples:np.ndarray, batch_labels:np.ndarray, per_point:bool=True)->np.ndarray:
+    def get_loss(
+        self,
+        batch_samples: np.ndarray,
+        batch_labels: np.ndarray,
+        per_point: bool = True,
+    ) -> np.ndarray:
         """Get the model loss on a given input and an expected output.
 
         Args:
@@ -186,7 +204,9 @@ class PytorchModel(Model):
             torch.tensor(batch_labels_tensor),
         ).item()
 
-    def get_grad(self, batch_samples:np.ndarray, batch_labels:np.ndarray)->np.ndarray:
+    def get_grad(
+        self, batch_samples: np.ndarray, batch_labels: np.ndarray
+    ) -> np.ndarray:
         """Get the gradient of the model loss with respect to the model parameters, given an input and expected output.
 
         Args:
@@ -205,10 +225,9 @@ class PytorchModel(Model):
         loss.backward()
         return [p.grad.numpy() for p in self.model_obj.parameters()]
 
-    def get_intermediate_outputs(self,
-                                 layers:List[int],
-                                 batch_samples:np.ndarray,
-                                 forward_pass:bool=True) -> List[np.ndarray]:
+    def get_intermediate_outputs(
+        self, layers: List[int], batch_samples: np.ndarray, forward_pass: bool = True
+    ) -> List[np.ndarray]:
         """Get the intermediate output of layers (a.k.a. features), on a given input.
 
         Args:
@@ -254,70 +273,71 @@ class PytorchModel(Model):
 
         return hook
 
-    def get_rescaled_logits(self, dataset: Dataset, handler: AbstractInputHandler) -> np.ndarray:
-            """Get the rescaled logits of the model on a given input and expected output.
+    def get_rescaled_logits(
+        self, dataset: Dataset, handler: AbstractInputHandler
+    ) -> np.ndarray:
+        """Get the rescaled logits of the model on a given input and expected output.
 
-            Args:
-            ----
-                batch_samples: Model input.
-                batch_labels: Model expected output.
+        Args:
+        ----
+            batch_samples: Model input.
+            batch_labels: Model expected output.
 
-            Returns:
-            -------
-                The rescaled logit value.
+        Returns:
+        -------
+            The rescaled logit value.
 
-            """
+        """
 
-            def logit(p):
-                return torch.log((p +1e-7) / (1 - p + 1e-7))
+        def logit(p):
+            return torch.log((p + 1e-7) / (1 - p + 1e-7))
 
-            def rescaled_logits(model_output, y_true):
-                p = torch.sigmoid(model_output)    
-                p_adjusted = torch.where(y_true == 1, p, 1 - p)       
-                phi_p = logit(p_adjusted)          
-                return phi_p
-            
+        def rescaled_logits(model_output, y_true):
+            p = torch.sigmoid(model_output)
+            p_adjusted = torch.where(y_true == 1, p, 1 - p)
+            phi_p = logit(p_adjusted)
+            return phi_p
 
-            device = "cuda:0" if torch.cuda.is_available() else "cpu"
-            self.model_obj.to(device)
-            self.model_obj.eval()
+        device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        self.model_obj.to(device)
+        self.model_obj.eval()
 
-            with torch.no_grad():
-                dataloader = handler.get_dataloader_from_dataset(dataset)
-                rescaled_list = []
-                for x, y in dataloader:
-                    if isinstance(x, torch.Tensor):
-                        x = x.to(device)  # noqa: PLW2901
-                    if isinstance(y, torch.Tensor):
-                        y = y.to(device)  # noqa: PLW2901
-                    all_logits = self.model_obj(x)
-                    if all_logits.dim() > 1:
-                        all_logits = all_logits.squeeze()
-                    if all_logits.dim() == 0:
-                        all_logits = all_logits.unsqueeze(0)
-                    rescaled_output = rescaled_logits(all_logits, y)
-                    rescaled_list.append(torch.flatten(rescaled_output).cpu().numpy())
+        with torch.no_grad():
+            dataloader = handler.get_dataloader_from_dataset(dataset)
+            rescaled_list = []
+            for x, y in dataloader:
+                if isinstance(x, torch.Tensor):
+                    x = x.to(device)  # noqa: PLW2901
+                if isinstance(y, torch.Tensor):
+                    y = y.to(device)  # noqa: PLW2901
+                all_logits = self.model_obj(x)
+                if all_logits.dim() > 1:
+                    all_logits = all_logits.squeeze()
+                if all_logits.dim() == 0:
+                    all_logits = all_logits.unsqueeze(0)
+                rescaled_output = rescaled_logits(all_logits, y)
+                rescaled_list.append(torch.flatten(rescaled_output).cpu().numpy())
 
-                all_rescaled_logits = np.concatenate(rescaled_list)
-            self.model_obj.to("cpu")
-            return all_rescaled_logits                
+            all_rescaled_logits = np.concatenate(rescaled_list)
+        self.model_obj.to("cpu")
+        return all_rescaled_logits
 
-            # with torch.no_grad():
-            #     rescaled_list = []
-            #     batched_samples = torch.split(torch.tensor(np.array(batch_samples), dtype=torch.float32), self.batch_size)
-            #     batched_labels = torch.split(torch.tensor(np.array(batch_labels), dtype=torch.float32), self.batch_size)
-            #     # TODO: split input and labels. Use handler.get_dataloader_from_dataset, device management
-            #     for x, y in zip(batched_samples, batched_labels):
-            #         x = x.to(device)  # noqa: PLW2901
-            #         y = y.to(device)  # noqa: PLW2901
-            #         all_logits = self.model_obj(x)
-            #         if all_logits.dim() > 1:
-            #             all_logits = all_logits.squeeze()
-            #         if all_logits.dim() == 0:
-            #             all_logits = all_logits.unsqueeze(0)
-            #         rescaled_output = rescaled_logits(all_logits.squeeze(), y)
-            #         rescaled_list.append(torch.flatten(rescaled_output).cpu().numpy())
+        # with torch.no_grad():
+        #     rescaled_list = []
+        #     batched_samples = torch.split(torch.tensor(np.array(batch_samples), dtype=torch.float32), self.batch_size)
+        #     batched_labels = torch.split(torch.tensor(np.array(batch_labels), dtype=torch.float32), self.batch_size)
+        #     # TODO: split input and labels. Use handler.get_dataloader_from_dataset, device management
+        #     for x, y in zip(batched_samples, batched_labels):
+        #         x = x.to(device)  # noqa: PLW2901
+        #         y = y.to(device)  # noqa: PLW2901
+        #         all_logits = self.model_obj(x)
+        #         if all_logits.dim() > 1:
+        #             all_logits = all_logits.squeeze()
+        #         if all_logits.dim() == 0:
+        #             all_logits = all_logits.unsqueeze(0)
+        #         rescaled_output = rescaled_logits(all_logits.squeeze(), y)
+        #         rescaled_list.append(torch.flatten(rescaled_output).cpu().numpy())
 
-            #     all_rescaled_logits = np.concatenate(rescaled_list)
-            # self.model_obj.to("cpu")
-            # return all_rescaled_logits
+        #     all_rescaled_logits = np.concatenate(rescaled_list)
+        # self.model_obj.to("cpu")
+        # return all_rescaled_logits

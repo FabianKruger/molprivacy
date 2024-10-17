@@ -12,11 +12,7 @@ from leakpro.user_inputs.abstract_input_handler import AbstractInputHandler
 class AttackP(AbstractMIA):
     """Implementation of the P-attack."""
 
-    def __init__(
-        self,
-        handler: AbstractInputHandler,
-        configs: dict
-    ) -> None:
+    def __init__(self, handler: AbstractInputHandler, configs: dict) -> None:
         """Initialize the AttackP class.
 
         Args:
@@ -34,7 +30,7 @@ class AttackP(AbstractMIA):
         self.logger.info("Configuring the Population attack")
         self._configure_attack(configs)
 
-    def _configure_attack(self, configs:dict) -> None:
+    def _configure_attack(self, configs: dict) -> None:
         self.attack_data_fraction = configs.get("attack_data_fraction", 0.5)
 
         # Define the validation dictionary as: {parameter_name: (parameter, min_value, max_value)}
@@ -48,8 +44,10 @@ class AttackP(AbstractMIA):
         """Return a description of the attack."""
         title_str = "Population attack (P-attack)"
 
-        reference_str = "Ye, Jiayuan, et al. Enhanced membership inference attacks against machine learning models. " \
-                        "Proceedings of the 2022 ACM SIGSAC Conference on Computer and Communications Security. 2022."
+        reference_str = (
+            "Ye, Jiayuan, et al. Enhanced membership inference attacks against machine learning models. "
+            "Proceedings of the 2022 ACM SIGSAC Conference on Computer and Communications Security. 2022."
+        )
 
         summary_str = "The Population attack (P-attack) is a membership inference attack based on the output loss of a black-box model."  # noqa: E501
 
@@ -66,19 +64,25 @@ class AttackP(AbstractMIA):
             "detailed": detailed_str,
         }
 
-
     def prepare_attack(self) -> None:
         """Prepare data needed for running the metric on the target model and dataset."""
         # sample dataset to compute histogram
         self.logger.info("Preparing attack data for training the Population attack")
-        self.attack_data_indices = self.sample_indices_from_population(include_train_indices = False,
-                                                                include_test_indices = False)
+        self.attack_data_indices = self.sample_indices_from_population(
+            include_train_indices=False, include_test_indices=False
+        )
 
         # subsample the attack data based on the fraction
-        self.logger.info(f"Subsampling attack data from {len(self.attack_data_indices)} points")
+        self.logger.info(
+            f"Subsampling attack data from {len(self.attack_data_indices)} points"
+        )
         n_points = int(self.attack_data_fraction * len(self.attack_data_indices))
-        attack_data = self.sample_data_from_dataset(self.attack_data_indices, n_points).dataset
-        self.logger.info(f"Number of attack data points after subsampling: {len(attack_data)}")
+        attack_data = self.sample_data_from_dataset(
+            self.attack_data_indices, n_points
+        ).dataset
+        self.logger.info(
+            f"Number of attack data points after subsampling: {len(attack_data)}"
+        )
 
         # signals based on training dataset
         self.attack_signal = np.array(self.signal([self.target_model], attack_data))
@@ -99,7 +103,9 @@ class AttackP(AbstractMIA):
         # map the threshold with the alpha
         self.quantiles = np.logspace(-5, 0, 100)
         # obtain the threshold values based on the reference dataset
-        thresholds = self.hypothesis_test_func(self.attack_signal, self.quantiles).reshape(-1, 1)
+        thresholds = self.hypothesis_test_func(
+            self.attack_signal, self.quantiles
+        ).reshape(-1, 1)
 
         num_threshold = len(self.quantiles)
 
@@ -109,12 +115,16 @@ class AttackP(AbstractMIA):
         audit_signal = np.array(self.signal([self.target_model], audit_data)).squeeze()
 
         # pick out the in-members and out-members
-        self.in_member_signals =  audit_signal[self.audit_dataset["in_members"]]
+        self.in_member_signals = audit_signal[self.audit_dataset["in_members"]]
         self.out_member_signals = audit_signal[self.audit_dataset["out_members"]]
 
         # compute the signals for the in-members and out-members
-        member_signals = (self.in_member_signals.reshape(-1, 1).repeat(num_threshold, 1).T)
-        non_member_signals = (self.out_member_signals.reshape(-1, 1).repeat(num_threshold, 1).T)
+        member_signals = (
+            self.in_member_signals.reshape(-1, 1).repeat(num_threshold, 1).T
+        )
+        non_member_signals = (
+            self.out_member_signals.reshape(-1, 1).repeat(num_threshold, 1).T
+        )
         member_preds = np.less(member_signals, thresholds)
         non_member_preds = np.less(non_member_signals, thresholds)
 

@@ -12,17 +12,26 @@ import os
 # `scores` is a numpy array containing the model scores
 # `labels` is a numpy array containing the true labels
 
-def write_true_positives_to_disc(dataset: Dataset, scores: np.ndarray, labels: np.ndarray, mask: np.ndarray, configs: Dict, attack: str, higher_score_class_1: bool = True):
+
+def write_true_positives_to_disc(
+    dataset: Dataset,
+    scores: np.ndarray,
+    labels: np.ndarray,
+    mask: np.ndarray,
+    configs: Dict,
+    attack: str,
+    higher_score_class_1: bool = True,
+):
 
     # sanity check, turn off for performance
-    compare_datasets(dataset, configs=configs, mask= mask)
+    compare_datasets(dataset, configs=configs, mask=mask)
     scores = scores.squeeze()
 
     original_scores = scores.copy()
 
     if not higher_score_class_1:
         scores = -scores
-    
+
     # Calculate the ROC curve
     fpr, tpr, thresholds = roc_curve(labels, scores)
 
@@ -39,13 +48,16 @@ def write_true_positives_to_disc(dataset: Dataset, scores: np.ndarray, labels: n
     true_positive_samples = [dataset[i][0] for i in true_positive_indices]
 
     # Convert the samples (which are tensors) to lists
-    true_positive_samples = [sample.tolist() if isinstance(sample, torch.Tensor) else sample for sample in true_positive_samples]
+    true_positive_samples = [
+        sample.tolist() if isinstance(sample, torch.Tensor) else sample
+        for sample in true_positive_samples
+    ]
 
     # Load the original data
     original_data_path = configs["train_data_path"]
     original_data = pd.read_csv(original_data_path)
     # filter out indices that are false in the mask
-    mask = mask[:len(original_data)]
+    mask = mask[: len(original_data)]
     original_data = original_data[mask]
 
     # Get rows of original data corresponding to true_positive_indices
@@ -53,12 +65,14 @@ def write_true_positives_to_disc(dataset: Dataset, scores: np.ndarray, labels: n
     molecules = true_positive_originals["smiles"]
     property_label = true_positive_originals["label"]
     # Create a DataFrame with the relevant information
-    sample_df = pd.DataFrame({
-    #   "scores": original_scores[true_positive_indices], 
-    #   "samples": true_positive_samples, 
-        "molecules": molecules,
-        "property_label": property_label
-    })
+    sample_df = pd.DataFrame(
+        {
+            #   "scores": original_scores[true_positive_indices],
+            #   "samples": true_positive_samples,
+            "molecules": molecules,
+            "property_label": property_label,
+        }
+    )
 
     # Save the DataFrame to a CSV file
     output_dir = configs["report_log"] / "true_positives_at_FPR0"
@@ -67,12 +81,12 @@ def write_true_positives_to_disc(dataset: Dataset, scores: np.ndarray, labels: n
     sample_df.to_csv(output_path, index=False)
 
 
-def compare_datasets(dataset: Dataset, configs: Dict, mask = None):
+def compare_datasets(dataset: Dataset, configs: Dict, mask=None):
     train_csv_file = configs["train_data_path"]
     rep = configs["representation"]
     df = pd.read_csv(train_csv_file)
     if mask is not None:
-        mask = mask[:len(df)]
+        mask = mask[: len(df)]
         df = df[mask]
     file_dataset, _ = convert_dataset(df, rep)
     # check for the indices to make sure we didnt mess up the order
@@ -98,5 +112,3 @@ def compare_datasets(dataset: Dataset, configs: Dict, mask = None):
                     assert o == i, f"Mismatch at index {idx}"
             else:
                 assert o == i, f"Mismatch at index {idx}"
-
-        

@@ -7,7 +7,7 @@
 # import pandas as pd
 
 # def download_data(dataset_name: Literal["bbb", "ames", "herg"]) -> pd.DataFrame:
-#     """Download data from Therapeutics Data Commons. Datasets are under CC BY 4.0 license (last checked 2024-08-27). 
+#     """Download data from Therapeutics Data Commons. Datasets are under CC BY 4.0 license (last checked 2024-08-27).
 
 #     Args:
 #         dataset_name: Dataset to download. Accepts either "bbb" or "ames" or "herg".
@@ -42,5 +42,3 @@
 #             data.rename(columns={"Drug": "smiles", "Y": "label"}, inplace=True)
 #             data = clean_smiles_df(data)
 #             save_csv(data, f"{dataset}.csv")
-
-

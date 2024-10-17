@@ -89,7 +89,9 @@ class Optimizer(Generic[T], ABC):
         """Save best hyperparameters in result folder."""
         file_path = self.subfolder_path / "optimized_hyperparameters.yaml"
         with open(file_path, "w") as yaml_file:
-            yaml.dump(self.optimized_hyperparameters, yaml_file, default_flow_style=False)
+            yaml.dump(
+                self.optimized_hyperparameters, yaml_file, default_flow_style=False
+            )
 
     def test_model(self) -> None:
         """Test the trained model with the test set."""
@@ -104,12 +106,14 @@ class Optimizer(Generic[T], ABC):
             for x, y in test_dataloader:
                 if isinstance(x, torch.Tensor):
                     logits = model(x.to(model.device))
-                else: 
+                else:
                     logits = model(x)
                 predictions = torch.sigmoid(logits.squeeze())
                 if predictions.dim() == 0:
                     predictions = predictions.unsqueeze(0)
-                assert predictions.shape == y.shape, "Predictions and labels dont have the same shape."
+                assert (
+                    predictions.shape == y.shape
+                ), "Predictions and labels dont have the same shape."
                 for pred, label in zip(predictions, y):
                     y_pred.extend(pred.detach().flatten().tolist())
                     y_true.extend(label.detach().flatten().tolist())

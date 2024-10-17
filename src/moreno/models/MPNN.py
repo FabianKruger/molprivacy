@@ -9,7 +9,6 @@ from rdkit.Chem import Mol
 from moreno.config import Config
 
 
-
 class MPNN(nn.Module):
     """Message passing neural network based on the chemprop implementation."""
 
@@ -65,7 +64,7 @@ class MPNN(nn.Module):
         self.classifier = nn.Sequential(*layers)
 
     def forward(self, molecules: List[List[Mol]]) -> torch.Tensor:
-        encoding = self.encoder(molecules) 
+        encoding = self.encoder(molecules)
         logits = self.classifier(encoding)
         return logits
 

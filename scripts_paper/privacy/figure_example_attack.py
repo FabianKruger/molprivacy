@@ -6,20 +6,20 @@ from rdkit.Chem import rdDepictor
 import pandas as pd
 import math
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Read the CSV file
     df = pd.read_csv(".../privacy/results/true_positives_at_FPR0/lira.csv")
 
     # Sort the dataframe by the 'property_label' column
-    df = df.sort_values(by='property_label')
+    df = df.sort_values(by="property_label")
 
     # Create molecules from SMILES strings and compute 2D coordinates
     mols = []
-    for i, smiles in enumerate(df['molecules']):
+    for i, smiles in enumerate(df["molecules"]):
         mol = Chem.MolFromSmiles(smiles)
         if i == 0:
             # Use rdDepictor with ring templates for the first molecule
-            #rdDepictor.Compute2DCoords(mol, useRingTemplates=True)
+            # rdDepictor.Compute2DCoords(mol, useRingTemplates=True)
             pass
         else:
             # Use rdCoordGen for the rest of the molecules
@@ -32,7 +32,7 @@ if __name__ == '__main__':
     n_rows = math.ceil(n_mols / n_cols)
 
     # Create a figure
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(4*n_cols, 4*n_rows))
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(4 * n_cols, 4 * n_rows))
 
     # Flatten axes array for easier indexing
     axes = axes.flatten() if n_rows > 1 or n_cols > 1 else [axes]
@@ -42,15 +42,34 @@ if __name__ == '__main__':
         if i < len(axes):
             img = Draw.MolToImage(mol, size=(300, 300))
             axes[i].imshow(img)
-            axes[i].axis('off')
-            
+            axes[i].axis("off")
+
             # Add label below the image
-            label = df['property_label'].iloc[i]
+            label = df["property_label"].iloc[i]
             if label == 0:
-                axes[i].text(0.5, -0.1, f"Label: {label}", ha='center', va='top', transform=axes[i].transAxes, 
-                            fontsize=20, fontweight='bold', bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.2'))
+                axes[i].text(
+                    0.5,
+                    -0.1,
+                    f"Label: {label}",
+                    ha="center",
+                    va="top",
+                    transform=axes[i].transAxes,
+                    fontsize=20,
+                    fontweight="bold",
+                    bbox=dict(
+                        facecolor="white", edgecolor="black", boxstyle="round,pad=0.2"
+                    ),
+                )
             else:
-                axes[i].text(0.5, -0.1, f"Label: {label}", ha='center', va='top', transform=axes[i].transAxes, fontsize=20)
+                axes[i].text(
+                    0.5,
+                    -0.1,
+                    f"Label: {label}",
+                    ha="center",
+                    va="top",
+                    transform=axes[i].transAxes,
+                    fontsize=20,
+                )
 
     # Remove empty subplots
     for j in range(i + 1, len(axes)):
@@ -58,4 +77,4 @@ if __name__ == '__main__':
 
     # Adjust layout and display the figure
     plt.tight_layout()
-    plt.savefig('.../leaked_molecules.pdf', bbox_inches='tight')
+    plt.savefig(".../leaked_molecules.pdf", bbox_inches="tight")

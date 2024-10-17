@@ -4,30 +4,26 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
 
+
 def main():
     base_dir = Path("...")
-    representations = ["ECFP4", "ECFP6", "graph", "MACCS", "rdkit", "transformer_matrix"]
+    representations = [
+        "ECFP4",
+        "ECFP6",
+        "graph",
+        "MACCS",
+        "rdkit",
+        "transformer_matrix",
+    ]
     attacks = ["lira", "rmia"]
     datasets = ["bbb", "ames", "del", "herg"]
 
     # Rename mappings
-    rep_rename = {
-        "transformer_matrix": "SMILES",
-        "rdkit": "RDKitFP",
-        "graph": "Graph"
-    }
+    rep_rename = {"transformer_matrix": "SMILES", "rdkit": "RDKitFP", "graph": "Graph"}
 
-    dataset_titles = {
-        "ames": "Ames",
-        "bbb": "BBB",
-        "del": "DEL",
-        "herg": "hERG"
-    }
+    dataset_titles = {"ames": "Ames", "bbb": "BBB", "del": "DEL", "herg": "hERG"}
 
-    attack_titles = {
-        "lira": "LiRA",
-        "rmia": "RMIA"
-    }
+    attack_titles = {"lira": "LiRA", "rmia": "RMIA"}
 
     # Set the color palette to Pastel1
     sns.set_palette("Pastel1")
@@ -57,13 +53,15 @@ def main():
 
                 for job_num in range(1, 21):
                     job_folder = base_dir / dataset / f"job_{job_num}"
-                    
-                    csv_file = job_folder / "..." / "privacy" / "results" / attack / "ROC.csv" # path to roc csv file
+
+                    csv_file = (
+                        job_folder / "..." / "privacy" / "results" / attack / "ROC.csv"
+                    )  # path to roc csv file
 
                     try:
                         df = pd.read_csv(csv_file)
-                        fpr = df['fpr'].values
-                        tpr = df['tpr'].values
+                        fpr = df["fpr"].values
+                        tpr = df["tpr"].values
 
                         # Ensure that FPR and TPR are sorted in ascending order
                         if fpr[0] > fpr[-1]:  # Check if sorted in descending order
@@ -89,30 +87,41 @@ def main():
                     mean_tpr = np.median(tpr_array, axis=0)
 
                     # Plot the mean ROC curve using Seaborn
-                    sns.lineplot(x=common_fpr, y=mean_tpr, ax=ax, label=rep_rename.get(rep, rep))
+                    sns.lineplot(
+                        x=common_fpr, y=mean_tpr, ax=ax, label=rep_rename.get(rep, rep)
+                    )
 
             if has_valid_data:
-                ax.set_xscale('log')
-                ax.set_yscale('log')
+                ax.set_xscale("log")
+                ax.set_yscale("log")
                 ax.set_xlim(common_fpr[0], common_fpr[-1])  # Set x-axis limits
             else:
-                ax.set_xscale('log')
-                ax.set_yscale('linear')  # Default to linear scale if no valid data
+                ax.set_xscale("log")
+                ax.set_yscale("linear")  # Default to linear scale if no valid data
 
             # Plot the diagonal dashed line without adding it to the legend
-            ax.plot([common_fpr[0], 1], [common_fpr[0], 1], linestyle='--', color='gray', label='_nolegend_')
+            ax.plot(
+                [common_fpr[0], 1],
+                [common_fpr[0], 1],
+                linestyle="--",
+                color="gray",
+                label="_nolegend_",
+            )
 
             # Set the title using the renamed dataset and attack names
-            ax.set_title(f"{dataset_titles.get(dataset, dataset)} - {attack_titles.get(attack, attack)}")
+            ax.set_title(
+                f"{dataset_titles.get(dataset, dataset)} - {attack_titles.get(attack, attack)}"
+            )
             ax.set_xlabel("False Positive Rate")
             ax.set_ylabel("True Positive Rate")
-            ax.legend(loc='lower right')
+            ax.legend(loc="lower right")
 
     plt.tight_layout()
-    result_folder_path = Path("...") # path to folder where you want to save the figure
+    result_folder_path = Path("...")  # path to folder where you want to save the figure
     result_folder_path.mkdir(exist_ok=True)
-    plt.savefig(result_folder_path / f"roc_curves.pdf", bbox_inches='tight')
+    plt.savefig(result_folder_path / f"roc_curves.pdf", bbox_inches="tight")
     plt.close()
-    
+
+
 if __name__ == "__main__":
     main()
