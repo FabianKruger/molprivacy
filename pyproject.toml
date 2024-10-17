@@ -6,9 +6,16 @@ build-backend = "hatchling.build"
 name = "molprivacy"
 version = "0.1.0"
 requires-python = ">=3.12"
+classifiers = [
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
 authors = [{ name = "Fabian Krueger", email = "fabian.kruger@astrazeneca.com" }]
 readme = "README.md"
 license = { file = "LICENSE" }
+description = "Assessing training data privacy for molecular property prediction."
+keywords = ["privacy", "cheminformatics", "neural networks", "membership inference attack", "MIA"]
 dependencies = [
     "chemprop==1.6.1",
     "joblib==1.4.2",
@@ -26,6 +33,10 @@ dependencies = [
     "torch==2.4.0",
     "tqdm==4.66.5",
 ]
+
+[project.urls]
+Homepage = "https://github.com/FabianKruger/molprivacy"
+Issues = "https://github.com/FabianKruger/molprivacy/issues"
 
 [project.scripts]
 privacytest = "privacytest.__main__:main"
