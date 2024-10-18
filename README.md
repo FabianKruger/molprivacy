@@ -8,7 +8,7 @@ These instructions will help you install the python package and conduct a privac
 
 ### Prerequisites
 
-You need to have an environment with python version 3.12. This can be created for exampple using conda.
+You need to have an environment with python version 3.12. This can be created for example using conda.
 
 ```
 $ conda create -n privacy_env python=3.12 
