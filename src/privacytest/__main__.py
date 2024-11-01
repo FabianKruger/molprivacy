@@ -112,32 +112,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-    # from rdkit import Chem
-    # def smiles_to_tensor(smiles_list):
-    # # Define the atoms of interest
-    #     atom_symbols = ['C', 'O', 'N', 'S', 'P']
-
-    #     # List to store the tensors
-    #     array_list = []
-
-    #     for smiles in smiles_list:
-    #         # Parse the SMILES string using RDKit
-    #         mol = Chem.MolFromSmiles(smiles)
-
-    #         # Create a list to hold the counts of each atom type
-    #         atom_counts = [0] * len(atom_symbols)
-
-    #         # Count the occurrences of each atom in the molecule
-    #         for atom in mol.GetAtoms():
-    #             symbol = atom.GetSymbol()
-    #             if symbol in atom_symbols:
-    #                 atom_counts[atom_symbols.index(symbol)] += 1
-
-    #         # Convert the atom counts to a tensor
-    #         array_list.append(np.array(atom_counts))
-
-    #     # Convert the list of tensors to a NumPy array
-    #     return np.array(array_list), 5
-
-    # privacy_test(representation="rdkit", result_folder="/home/khcq385/MOPADD/temp", dataset="del", hyperparameter_optimization_time=120)
