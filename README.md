@@ -154,9 +154,15 @@ When you run the privacy test, the results are saved in the `result_folder` you 
 
 ## Citation
 
-This repository is part of the paper "Publishing neural networks in drug discovery compromises training data privacy". \\
-Pre-print: TODO \\
-Bibtex: TODO
+This repository is part of the paper "Publishing Neural Networks in Drug Discovery Might Compromise Training Data Privacy".
+Pre-print: [arXiv](https://doi.org/10.48550/arXiv.2410.16975)
+Bibtex: 
+@article{kruger2024publishing,
+  title={Publishing Neural Networks in Drug Discovery Might Compromise Training Data Privacy},
+  author={Kr{\"u}ger, Fabian P and {\"O}stman, Johan and Mervin, Lewis and Tetko, Igor V and Engkvist, Ola},
+  journal={arXiv preprint arXiv:2410.16975},
+  year={2024}
+}
 
 
 
