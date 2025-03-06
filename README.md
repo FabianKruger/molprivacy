@@ -62,7 +62,7 @@ Default: `0.45 0.1 0.45`
 `--hyperparameter_optimization_time`: Time in seconds allocated for hyperparameter optimization during model training.
 Default: `600`
 
-`--attack_data_fraction`: Fraction of data to use for the Reverse Model Inversion Attack (RMIA). Reduce this value if the RMIA attack runs out of memory.
+`--attack_data_fraction`: Fraction of data to use for the Robust Membership Inference Attack (RMIA). Reduce this value if the RMIA attack runs out of memory.
 Default: `1.0`
 
 #### Examples
