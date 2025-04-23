@@ -1,6 +1,6 @@
 # Training data privacy assessment for molecular property prediction
 
-Python package to assess how much information somebody can deduct from a neural network trained on some (confidential) training data for molecular property prediction.
+Python package to assess how much information somebody can deduct from a neural network trained on some (confidential) training data for molecular property prediction. Corresponding paper: [Journal of Cheminformatics](https://doi.org/10.1186/s13321-025-00982-w)
 
 ## Getting Started
 
@@ -155,14 +155,25 @@ When you run the privacy test, the results are saved in the `result_folder` you 
 ## Citation
 
 This repository is part of the paper "Publishing Neural Networks in Drug Discovery Might Compromise Training Data Privacy".
-Pre-print: [arXiv](https://doi.org/10.48550/arXiv.2410.16975)
-Bibtex: 
-@article{kruger2024publishing,
-  title={Publishing Neural Networks in Drug Discovery Might Compromise Training Data Privacy},
+
+- Pre-print: [arXiv](https://doi.org/10.48550/arXiv.2410.16975)
+- Published paper: [Journal of Cheminformatics](https://doi.org/10.1186/s13321-025-00982-w)
+
+BibTeX:
+
+```bibtex
+@article{kruger2025publishing,
+  title={Publishing neural networks in drug discovery might compromise training data privacy},
   author={Kr{\"u}ger, Fabian P and {\"O}stman, Johan and Mervin, Lewis and Tetko, Igor V and Engkvist, Ola},
-  journal={arXiv preprint arXiv:2410.16975},
-  year={2024}
+  journal={Journal of Cheminformatics},
+  volume={17},
+  number={1},
+  pages={38},
+  year={2025},
+  publisher={Springer}
 }
+```
+
 
 
 
