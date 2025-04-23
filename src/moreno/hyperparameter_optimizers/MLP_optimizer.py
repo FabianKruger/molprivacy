@@ -62,8 +62,8 @@ class MLPOptimizer(Optimizer[MLPLightning]):
         dropout = trial.suggest_uniform("dropout", 0.0, 1.0)
         hidden_dim = trial.suggest_int("hidden_dim", 10, 1000)
         num_hidden_layers = trial.suggest_int("num_hidden_layers", 1, 5)
-        learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-2, log=False)
-        weight_decay = trial.suggest_float("weight_decay", 1e-6, 1e-3, log=False)
+        learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True)
+        weight_decay = trial.suggest_float("weight_decay", 1e-6, 1e-3, log=True)
 
         # instantiate model
         model = self.model_class(
