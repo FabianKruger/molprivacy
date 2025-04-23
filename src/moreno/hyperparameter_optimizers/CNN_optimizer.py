@@ -60,8 +60,8 @@ class CNNOptimizer(Optimizer[CNNLightning]):
 
         # hyperparameters
         dropout = trial.suggest_uniform("dropout", 0.0, 1.0)
-        learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-2, log=False)
-        weight_decay = trial.suggest_float("weight_decay", 1e-6, 1e-3, log=False)
+        learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True)
+        weight_decay = trial.suggest_float("weight_decay", 1e-6, 1e-3, log=True)
 
         # instantiate model
         model = self.model_class(
